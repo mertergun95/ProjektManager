@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Windows.Input;
 using Newtonsoft.Json;
 using ProjektManager.Helpers;
-using System.IO;
+
 using IOPath = System.IO.Path;
 
 
@@ -141,14 +141,14 @@ namespace ProjektManager.Views
             List<string> projekte = new();
             bool indexAusLegacy = false;
 
-            if (File.Exists(indexPfad))
+            if (System.IO.File.Exists(indexPfad))
             {
-                projekte = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(indexPfad)) ?? new();
+                projekte = JsonConvert.DeserializeObject<List<string>>(System.IO.File.ReadAllText(indexPfad)) ?? new();
             }
 
-            if (projekte.Count == 0 && File.Exists(ProjektPfadHelper.LegacyLSTIndexDatei))
+            if (projekte.Count == 0 && System.IO.File.Exists(ProjektPfadHelper.LegacyLSTIndexDatei))
             {
-                projekte = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(ProjektPfadHelper.LegacyLSTIndexDatei)) ?? new();
+                projekte = JsonConvert.DeserializeObject<List<string>>(System.IO.File.ReadAllText(ProjektPfadHelper.LegacyLSTIndexDatei)) ?? new();
                 indexAusLegacy = projekte.Count > 0;
             }
 
@@ -160,21 +160,21 @@ namespace ProjektManager.Views
                 string jsonPfad = IOPath.Combine(ProjektPfadHelper.LST_Projekte_Ordner, name + ".json");
                 List<LSTKabel>? kabel = null;
 
-                if (File.Exists(jsonPfad))
+                if (System.IO.File.Exists(jsonPfad))
                 {
-                    kabel = JsonConvert.DeserializeObject<List<LSTKabel>>(File.ReadAllText(jsonPfad));
+                    kabel = JsonConvert.DeserializeObject<List<LSTKabel>>(System.IO.File.ReadAllText(jsonPfad));
                 }
                 else
                 {
                     string legacyPfad = ProjektPfadHelper.LegacyProjektDatei("LST_Projekte", name);
-                    if (File.Exists(legacyPfad))
+                    if (System.IO.File.Exists(legacyPfad))
                     {
-                        var json = File.ReadAllText(legacyPfad);
+                        var json = System.IO.File.ReadAllText(legacyPfad);
                         kabel = JsonConvert.DeserializeObject<List<LSTKabel>>(json);
                         if (kabel != null)
                         {
-                            Directory.CreateDirectory(ProjektPfadHelper.LSTProjektOrdner);
-                            File.WriteAllText(jsonPfad, json);
+                            System.IO.Directory.CreateDirectory(ProjektPfadHelper.LSTProjektOrdner);
+                            System.IO.File.WriteAllText(jsonPfad, json);
                             ProjektPfadHelper.TryDeleteLegacyFile(legacyPfad);
                             dateienAusLegacy = true;
                         }
@@ -202,8 +202,8 @@ namespace ProjektManager.Views
 
             if ((indexAusLegacy || dateienAusLegacy) && eindeutigeNamen.Count > 0)
             {
-                Directory.CreateDirectory(ProjektPfadHelper.LSTProjektOrdner);
-                File.WriteAllText(ProjektPfadHelper.LSTIndexDatei,
+                System.IO.Directory.CreateDirectory(ProjektPfadHelper.LSTProjektOrdner);
+                System.IO.File.WriteAllText(ProjektPfadHelper.LSTIndexDatei,
                     JsonConvert.SerializeObject(eindeutigeNamen, Formatting.Indented));
                 ProjektPfadHelper.TryDeleteLegacyFile(ProjektPfadHelper.LegacyLSTIndexDatei);
             }
@@ -216,14 +216,14 @@ namespace ProjektManager.Views
             List<string> projekte = new();
             bool indexAusLegacy = false;
 
-            if (File.Exists(indexPfad))
+            if (System.IO.File.Exists(indexPfad))
             {
-                projekte = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(indexPfad)) ?? new();
+                projekte = JsonConvert.DeserializeObject<List<string>>(System.IO.File.ReadAllText(indexPfad)) ?? new();
             }
 
-            if (projekte.Count == 0 && File.Exists(ProjektPfadHelper.LegacyLWLIndexDatei))
+            if (projekte.Count == 0 && System.IO.File.Exists(ProjektPfadHelper.LegacyLWLIndexDatei))
             {
-                projekte = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(ProjektPfadHelper.LegacyLWLIndexDatei)) ?? new();
+                projekte = JsonConvert.DeserializeObject<List<string>>(System.IO.File.ReadAllText(ProjektPfadHelper.LegacyLWLIndexDatei)) ?? new();
                 indexAusLegacy = projekte.Count > 0;
             }
 
@@ -235,21 +235,21 @@ namespace ProjektManager.Views
                 string pfad = IOPath.Combine(ProjektPfadHelper.LWLProjektOrdner, name + ".json");
                 Projekt? projekt = null;
 
-                if (File.Exists(pfad))
+                if (System.IO.File.Exists(pfad))
                 {
-                    projekt = JsonConvert.DeserializeObject<Projekt>(File.ReadAllText(pfad));
+                    projekt = JsonConvert.DeserializeObject<Projekt>(System.IO.File.ReadAllText(pfad));
                 }
                 else
                 {
                     string legacyPfad = ProjektPfadHelper.LegacyProjektDatei("LWL_Projekte", name);
-                    if (File.Exists(legacyPfad))
+                    if (System.IO.File.Exists(legacyPfad))
                     {
-                        var json = File.ReadAllText(legacyPfad);
+                        var json = System.IO.File.ReadAllText(legacyPfad);
                         projekt = JsonConvert.DeserializeObject<Projekt>(json);
                         if (projekt != null)
                         {
-                            Directory.CreateDirectory(ProjektPfadHelper.LWLProjektOrdner);
-                            File.WriteAllText(pfad, json);
+                            System.IO.Directory.CreateDirectory(ProjektPfadHelper.LWLProjektOrdner);
+                            System.IO.File.WriteAllText(pfad, json);
                             ProjektPfadHelper.TryDeleteLegacyFile(legacyPfad);
                             dateienAusLegacy = true;
                         }
@@ -277,8 +277,8 @@ namespace ProjektManager.Views
 
             if ((indexAusLegacy || dateienAusLegacy) && eindeutigeNamen.Count > 0)
             {
-                Directory.CreateDirectory(ProjektPfadHelper.LWLProjektOrdner);
-                File.WriteAllText(ProjektPfadHelper.LWLIndexDatei,
+                System.IO.Directory.CreateDirectory(ProjektPfadHelper.LWLProjektOrdner);
+                System.IO.File.WriteAllText(ProjektPfadHelper.LWLIndexDatei,
                     JsonConvert.SerializeObject(eindeutigeNamen, Formatting.Indented));
                 ProjektPfadHelper.TryDeleteLegacyFile(ProjektPfadHelper.LegacyLWLIndexDatei);
             }
