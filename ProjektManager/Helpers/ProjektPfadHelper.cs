@@ -10,6 +10,15 @@ namespace ProjektManager.Helpers
             "OneDrive - Klefenz GmbH",
             "ProjektManagerProgramm");
 
+        public static string ProjekteDateiPfad
+        {
+            get
+            {
+                Directory.CreateDirectory(BaseOrdner);
+                return Path.Combine(BaseOrdner, "projekte.json");
+            }
+        }
+
         // LST klasör ve index
         public static string LSTProjektOrdner => Path.Combine(BaseOrdner, "LST_Projekte");
         public static string LSTIndexDatei => Path.Combine(LSTProjektOrdner, "lst_projekte_index.json");
