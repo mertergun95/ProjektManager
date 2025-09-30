@@ -9,6 +9,7 @@ using System.Windows.Input;
 using Newtonsoft.Json;
 using ProjektManager.Helpers;
 using System.IO;
+using IOPath = System.IO.Path;
 
 
 
@@ -156,7 +157,7 @@ namespace ProjektManager.Views
 
             foreach (var name in eindeutigeNamen)
             {
-                string jsonPfad = Path.Combine(ProjektPfadHelper.LST_Projekte_Ordner, name + ".json");
+                string jsonPfad = IOPath.Combine(ProjektPfadHelper.LST_Projekte_Ordner, name + ".json");
                 List<LSTKabel>? kabel = null;
 
                 if (File.Exists(jsonPfad))
@@ -231,7 +232,7 @@ namespace ProjektManager.Views
 
             foreach (var name in eindeutigeNamen)
             {
-                string pfad = Path.Combine(ProjektPfadHelper.LWLProjektOrdner, name + ".json");
+                string pfad = IOPath.Combine(ProjektPfadHelper.LWLProjektOrdner, name + ".json");
                 Projekt? projekt = null;
 
                 if (File.Exists(pfad))
