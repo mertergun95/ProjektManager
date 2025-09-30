@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System;
 using System.IO;
 
-namespace ProjektManager.Helpers // DİKKAT: BU namespace senin projenin adıyla aynı olmalı!
+namespace ProjektManager.Helpers
 {
     public static class ProjektPfadHelper
     {
@@ -23,8 +18,16 @@ namespace ProjektManager.Helpers // DİKKAT: BU namespace senin projenin adıyla
         public static string LWLProjektOrdner => Path.Combine(BaseOrdner, "LWL_Projekte");
         public static string LWLIndexDatei => Path.Combine(LWLProjektOrdner, "lwl_projekte_index.json");
 
+        // Eski property isimleriyle uyumluluk
+        public static string LST_Projekte_Ordner => LSTProjektOrdner;
+        public static string LST_IndexDatei => LSTIndexDatei;
+        public static string LWL_Projekte_Ordner => LWLProjektOrdner;
+        public static string LWL_IndexDatei => LWLIndexDatei;
+
         public static void StelleVerzeichnisseSicher(string unterordner)
         {
+            Directory.CreateDirectory(BaseOrdner);
+
             string pfad = Path.Combine(BaseOrdner, unterordner);
             if (!Directory.Exists(pfad))
                 Directory.CreateDirectory(pfad);
