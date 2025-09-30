@@ -147,8 +147,10 @@ namespace ProjektManager.Views
             this.DialogResult = true;
             // 1. JSON olarak kaydet
             string projektName = System.IO.Path.GetFileNameWithoutExtension(ExcelPfad);
+            Directory.CreateDirectory(ProjektPfadHelper.LWLProjektOrdner);
             string jsonPfad = System.IO.Path.Combine(ProjektPfadHelper.LWLProjektOrdner, projektName + ".json");
             File.WriteAllText(jsonPfad, JsonConvert.SerializeObject(ErgebnisProjekt, Formatting.Indented));
+            ProjektPfadHelper.TryDeleteLegacyFile(ProjektPfadHelper.LegacyProjektDatei("LWL_Projekte", projektName));
 
             // 2. Index güncelle
             string indexPfad = ProjektPfadHelper.LWLIndexDatei;
@@ -160,8 +162,11 @@ namespace ProjektManager.Views
             if (!indexListe.Contains(projektName))
             {
                 indexListe.Add(projektName);
+                indexListe = indexListe.Distinct().ToList();
                 File.WriteAllText(indexPfad, JsonConvert.SerializeObject(indexListe, Formatting.Indented));
             }
+
+            ProjektPfadHelper.TryDeleteLegacyFile(ProjektPfadHelper.LegacyLWLIndexDatei);
 
             this.Close();
         }

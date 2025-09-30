@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Windows.Input;
 using Newtonsoft.Json;
 using ProjektManager.Helpers;
+using System.IO;
 
 
 
@@ -136,18 +137,53 @@ namespace ProjektManager.Views
         private void LadeLSTProjekte()
         {
             string indexPfad = ProjektPfadHelper.LST_IndexDatei;
-            if (!System.IO.File.Exists(indexPfad)) return;
+            List<string> projekte = new();
+            bool indexAusLegacy = false;
 
-            var projekte = JsonConvert.DeserializeObject<List<string>>(System.IO.File.ReadAllText(indexPfad)) ?? new();
-
-            foreach (var name in projekte)
+            if (File.Exists(indexPfad))
             {
-                string jsonPfad = System.IO.Path.Combine(ProjektPfadHelper.LST_Projekte_Ordner, name + ".json");
-                if (!System.IO.File.Exists(jsonPfad)) continue;
+                projekte = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(indexPfad)) ?? new();
+            }
 
-                var kabel = JsonConvert.DeserializeObject<List<LSTKabel>>(System.IO.File.ReadAllText(jsonPfad));
+            if (projekte.Count == 0 && File.Exists(ProjektPfadHelper.LegacyLSTIndexDatei))
+            {
+                projekte = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(ProjektPfadHelper.LegacyLSTIndexDatei)) ?? new();
+                indexAusLegacy = projekte.Count > 0;
+            }
+
+            var eindeutigeNamen = projekte.Distinct().ToList();
+            bool dateienAusLegacy = false;
+
+            foreach (var name in eindeutigeNamen)
+            {
+                string jsonPfad = Path.Combine(ProjektPfadHelper.LST_Projekte_Ordner, name + ".json");
+                List<LSTKabel>? kabel = null;
+
+                if (File.Exists(jsonPfad))
+                {
+                    kabel = JsonConvert.DeserializeObject<List<LSTKabel>>(File.ReadAllText(jsonPfad));
+                }
+                else
+                {
+                    string legacyPfad = ProjektPfadHelper.LegacyProjektDatei("LST_Projekte", name);
+                    if (File.Exists(legacyPfad))
+                    {
+                        var json = File.ReadAllText(legacyPfad);
+                        kabel = JsonConvert.DeserializeObject<List<LSTKabel>>(json);
+                        if (kabel != null)
+                        {
+                            Directory.CreateDirectory(ProjektPfadHelper.LSTProjektOrdner);
+                            File.WriteAllText(jsonPfad, json);
+                            ProjektPfadHelper.TryDeleteLegacyFile(legacyPfad);
+                            dateienAusLegacy = true;
+                        }
+                    }
+                }
+
+                if (kabel == null)
+                    continue;
+
                 var lstPage = new LSTVisualisierungPage(kabel);
-
                 Button btn = new Button
                 {
                     Content = "📊 LST: " + name,
@@ -162,37 +198,88 @@ namespace ProjektManager.Views
 
                 LSTProjektPanel.Children.Add(btn); // StackPanel
             }
+
+            if ((indexAusLegacy || dateienAusLegacy) && eindeutigeNamen.Count > 0)
+            {
+                Directory.CreateDirectory(ProjektPfadHelper.LSTProjektOrdner);
+                File.WriteAllText(ProjektPfadHelper.LSTIndexDatei,
+                    JsonConvert.SerializeObject(eindeutigeNamen, Formatting.Indented));
+                ProjektPfadHelper.TryDeleteLegacyFile(ProjektPfadHelper.LegacyLSTIndexDatei);
+            }
         }
 
 
         private void LadeLWLProjekte()
         {
             string indexPfad = ProjektPfadHelper.LWLIndexDatei;
-            if (!System.IO.File.Exists(indexPfad)) return;
+            List<string> projekte = new();
+            bool indexAusLegacy = false;
 
-            var projekte = JsonConvert.DeserializeObject<List<string>>(System.IO.File.ReadAllText(indexPfad));
-            foreach (var name in projekte)
+            if (File.Exists(indexPfad))
             {
-                string pfad = System.IO.Path.Combine(ProjektPfadHelper.LWLProjektOrdner, name + ".json");
-                if (!System.IO.File.Exists(pfad)) continue;
+                projekte = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(indexPfad)) ?? new();
+            }
 
-                var projekt = JsonConvert.DeserializeObject<Projekt>(System.IO.File.ReadAllText(pfad));
-                if (projekt == null) continue;
+            if (projekte.Count == 0 && File.Exists(ProjektPfadHelper.LegacyLWLIndexDatei))
+            {
+                projekte = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(ProjektPfadHelper.LegacyLWLIndexDatei)) ?? new();
+                indexAusLegacy = projekte.Count > 0;
+            }
 
+            var eindeutigeNamen = projekte.Distinct().ToList();
+            bool dateienAusLegacy = false;
+
+            foreach (var name in eindeutigeNamen)
+            {
+                string pfad = Path.Combine(ProjektPfadHelper.LWLProjektOrdner, name + ".json");
+                Projekt? projekt = null;
+
+                if (File.Exists(pfad))
+                {
+                    projekt = JsonConvert.DeserializeObject<Projekt>(File.ReadAllText(pfad));
+                }
+                else
+                {
+                    string legacyPfad = ProjektPfadHelper.LegacyProjektDatei("LWL_Projekte", name);
+                    if (File.Exists(legacyPfad))
+                    {
+                        var json = File.ReadAllText(legacyPfad);
+                        projekt = JsonConvert.DeserializeObject<Projekt>(json);
+                        if (projekt != null)
+                        {
+                            Directory.CreateDirectory(ProjektPfadHelper.LWLProjektOrdner);
+                            File.WriteAllText(pfad, json);
+                            ProjektPfadHelper.TryDeleteLegacyFile(legacyPfad);
+                            dateienAusLegacy = true;
+                        }
+                    }
+                }
+
+                if (projekt == null)
+                    continue;
+
+                var lokalesProjekt = projekt;
                 Button btn = new Button
                 {
                     Content = "📦 LWL: " + name,
                     Margin = new Thickness(5),
-                    Tag = projekt
+                    Tag = lokalesProjekt
                 };
 
                 btn.Click += (s, e) =>
                 {
-                    _main.ZeigeSeite(new ProjektVisualisierungPage(_main, projekt));
+                    _main.ZeigeSeite(new ProjektVisualisierungPage(_main, lokalesProjekt));
                 };
 
                 lwlPanel.Children.Add(btn);
+            }
 
+            if ((indexAusLegacy || dateienAusLegacy) && eindeutigeNamen.Count > 0)
+            {
+                Directory.CreateDirectory(ProjektPfadHelper.LWLProjektOrdner);
+                File.WriteAllText(ProjektPfadHelper.LWLIndexDatei,
+                    JsonConvert.SerializeObject(eindeutigeNamen, Formatting.Indented));
+                ProjektPfadHelper.TryDeleteLegacyFile(ProjektPfadHelper.LegacyLWLIndexDatei);
             }
         }
 

@@ -27,11 +27,33 @@ namespace ProjektManager.Data
         public static List<Projekt> Laden()
         {
             var pfad = SpeicherPfad;
+            var projekte = LeseProjektDatei(pfad);
 
+            if (projekte.Count > 0)
+                return projekte;
+
+            var legacyPfad = ProjektPfadHelper.LegacyProjekteDateiPfad;
+            var legacyProjekte = LeseProjektDatei(legacyPfad);
+
+            if (legacyProjekte.Count > 0)
+            {
+                Speichern(legacyProjekte);
+                ProjektPfadHelper.TryDeleteLegacyFile(legacyPfad);
+                return legacyProjekte;
+            }
+
+            return projekte;
+        }
+
+        private static List<Projekt> LeseProjektDatei(string pfad)
+        {
             if (!File.Exists(pfad))
                 return new List<Projekt>();
 
             var json = File.ReadAllText(pfad);
+            if (string.IsNullOrWhiteSpace(json))
+                return new List<Projekt>();
+
             return JsonSerializer.Deserialize<List<Projekt>>(json) ?? new List<Projekt>();
         }
     }
