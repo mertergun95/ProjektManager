@@ -1,0 +1,35 @@
+﻿<Window x:Class="ProjektManager.Views.KabelVerlegenWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Kabel verlegen" Height="220" Width="400"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize" WindowStyle="SingleBorderWindow">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Verlegte Länge eingeben (Meter oder %):"
+                   FontWeight="Bold" FontSize="14" />
+
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,10" Grid.Row="1">
+            <TextBox x:Name="MeterBox" Width="80" Margin="0,0,10,0"
+                     VerticalContentAlignment="Center"
+                     PreviewTextInput="MeterBox_PreviewTextInput" />
+            <TextBlock Text="Meter" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2">
+            <Slider x:Name="VerlegtSlider" Minimum="0" Maximum="100" TickFrequency="10"
+                    IsSnapToTickEnabled="True" ValueChanged="VerlegtSlider_ValueChanged"/>
+            <TextBlock x:Name="ProzentLabel" Text="0 %" HorizontalAlignment="Right"/>
+        </StackPanel>
+
+        <Button Grid.Row="3" Content="Übernehmen" Height="32" Margin="0,15,0,0"
+                HorizontalAlignment="Right" Width="120"
+                Click="Uebernehmen_Click"/>
+    </Grid>
+</Window>

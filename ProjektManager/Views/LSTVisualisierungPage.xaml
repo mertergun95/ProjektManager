@@ -1,0 +1,24 @@
+﻿<UserControl x:Class="ProjektManager.Views.LSTVisualisierungPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F0F0F0">
+
+    <Grid>
+        <!-- Arka Plan Logo -->
+        <Image Source="/Resources/FirmaLogo.png"
+               Opacity="0.05"
+               Stretch="Uniform"
+               Width="800"
+               Height="800"
+               HorizontalAlignment="Right"
+               VerticalAlignment="Bottom"
+               IsHitTestVisible="False"
+               Panel.ZIndex="-1"/>
+        
+        <!-- Ana Scroll Panel -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Canvas x:Name="KabelZeichenPanel" Background="#F8F8F8"/>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

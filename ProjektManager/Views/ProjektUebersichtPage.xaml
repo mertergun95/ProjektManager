@@ -1,0 +1,34 @@
+﻿<UserControl x:Class="ProjektManager.Views.ProjektUebersichtPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Background="#F0F0F0">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <!-- LST Butonları -->
+            <RowDefinition Height="*" />
+            <!-- Proje Kartları -->
+        </Grid.RowDefinitions>
+
+        <!-- 📊 LST Proje Butonları Paneli -->
+        <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
+            <StackPanel x:Name="LSTProjektPanel"
+                        Orientation="Horizontal"
+                        Margin="10"
+                        HorizontalAlignment="Left" />
+        </ScrollViewer>
+
+        <!-- 📦 Normal Proje Kartları -->
+        <ScrollViewer Grid.Row="1">
+            <WrapPanel x:Name="ProjektCardPanel"
+                       Orientation="Horizontal"
+                       Margin="20"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Top" />
+        </ScrollViewer>
+    </Grid>
+</UserControl>

@@ -1,0 +1,81 @@
+﻿<UserControl x:Class="ProjektManager.Views.LaengeDetailPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Height="Auto" Width="Auto">
+
+    <Grid x:Name="LayoutRoot" Background="#F0F0F0">
+
+        <!-- Satır yapısı: Filtre + Scroll alanı + Alt özet -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Filtre Satırı -->
+            <RowDefinition Height="*"/>
+            <!-- Scrollable içerik -->
+            <RowDefinition Height="Auto"/>
+            <!-- Özet Satırı -->
+        </Grid.RowDefinitions>
+
+        <!-- 🧰 FİLTRE SATIRI -->
+        <StackPanel Orientation="Horizontal" Margin="20,10,20,0" Grid.Row="0">
+            <CheckBox x:Name="CheckBoxNurErledigt" Content="Nur erledigte anzeigen"
+                      Margin="0,0,20,0"
+                      Checked="FilterCheckBox_Changed"
+                      Unchecked="FilterCheckBox_Changed"/>
+            <CheckBox x:Name="CheckBoxNurAbgerechnet" Content="Nur abgerechnete anzeigen"
+                      Margin="0,0,20,0"
+                      Checked="FilterCheckBox_Changed"
+                      Unchecked="FilterCheckBox_Changed"/>
+        </StackPanel>
+
+        <!-- 🧭 SCROLLABLE KISIM -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Auto"
+                      Margin="20,10,20,0">
+            <StackPanel Orientation="Vertical">
+
+                <!-- Länge başlığı -->
+                <TextBlock Name="LaengeTitel"
+                           FontSize="22"
+                           FontWeight="Bold"
+                           Foreground="#333333"
+                           Margin="0 0 0 20"/>
+
+                <!-- KmBar -->
+                <Canvas Name="KmBar"
+                        Height="80"
+                        Background="#F0F0F0" />
+
+                <!-- Leistungsbeschreibung Bar -->
+                <StackPanel Name="LeistungsBar"
+                            Orientation="Horizontal"
+                            Background="#D0D0D0"
+                            Height="80" />
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 🧾 SABİT ALTTAKİ KISIM: Özet Kartı -->
+        <Border Grid.Row="2"
+                Background="#E0E0E0"
+                CornerRadius="12"
+                Padding="20"
+                Margin="20,30,20,30"
+                HorizontalAlignment="Center"
+                Width="560">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="12"
+                                  ShadowDepth="3"
+                                  Direction="270"
+                                  Opacity="0.2"
+                                  Color="#444444"/>
+            </Border.Effect>
+
+            <StackPanel x:Name="ZusammenfassungPanel" />
+        </Border>
+
+    </Grid>
+</UserControl>
