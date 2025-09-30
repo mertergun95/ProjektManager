@@ -2,6 +2,7 @@
 using ProjektManager.ViewModels;
 using ProjektManager.Views;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -10,7 +11,6 @@ using Microsoft.Win32;
 using ProjektManager.Helpers;
 using Newtonsoft.Json;
 using System.IO;
-using ProjektManager.Helpers;
 
 namespace ProjektManager
 {
@@ -66,19 +66,64 @@ namespace ProjektManager
         {
             var liste = new List<Projekt>();
 
-            if (!File.Exists(ProjektPfadHelper.LWL_IndexDatei))
-                return liste;
+            List<string> namen = new();
+            bool indexAusLegacy = false;
 
-            var namen = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(ProjektPfadHelper.LWL_IndexDatei)) ?? new();
-            foreach (var name in namen)
+            if (File.Exists(ProjektPfadHelper.LWL_IndexDatei))
             {
-                string pfad = System.IO.Path.Combine(ProjektPfadHelper.LWL_Projekte_Ordner, name + ".json");
+                namen = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(ProjektPfadHelper.LWL_IndexDatei)) ?? new();
+            }
+
+            if (namen.Count == 0)
+            {
+                if (File.Exists(ProjektPfadHelper.LegacyLWLIndexDatei))
+                {
+                    namen = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(ProjektPfadHelper.LegacyLWLIndexDatei)) ?? new();
+                    indexAusLegacy = namen.Count > 0;
+                }
+            }
+
+            var eindeutigeNamen = namen.Distinct().ToList();
+            bool dateienAusLegacy = false;
+
+            foreach (var name in eindeutigeNamen)
+            {
+                string pfad = Path.Combine(ProjektPfadHelper.LWL_Projekte_Ordner, name + ".json");
+                Projekt? projekt = null;
+
                 if (File.Exists(pfad))
                 {
-                    var projekt = JsonConvert.DeserializeObject<Projekt>(File.ReadAllText(pfad));
-                    if (projekt != null)
-                        liste.Add(projekt);
+                    projekt = JsonConvert.DeserializeObject<Projekt>(File.ReadAllText(pfad));
                 }
+                else
+                {
+                    string legacyPfad = ProjektPfadHelper.LegacyProjektDatei("LWL_Projekte", name);
+                    if (File.Exists(legacyPfad))
+                    {
+                        var json = File.ReadAllText(legacyPfad);
+                        projekt = JsonConvert.DeserializeObject<Projekt>(json);
+                        if (projekt != null)
+                        {
+                            Directory.CreateDirectory(ProjektPfadHelper.LWLProjektOrdner);
+                            File.WriteAllText(pfad, json);
+                            ProjektPfadHelper.TryDeleteLegacyFile(legacyPfad);
+                            dateienAusLegacy = true;
+                        }
+                    }
+                }
+
+                if (projekt != null)
+                {
+                    liste.Add(projekt);
+                }
+            }
+
+            if ((indexAusLegacy || dateienAusLegacy) && eindeutigeNamen.Count > 0)
+            {
+                Directory.CreateDirectory(ProjektPfadHelper.LWLProjektOrdner);
+                File.WriteAllText(ProjektPfadHelper.LWLIndexDatei,
+                    JsonConvert.SerializeObject(eindeutigeNamen, Formatting.Indented));
+                ProjektPfadHelper.TryDeleteLegacyFile(ProjektPfadHelper.LegacyLWLIndexDatei);
             }
 
             return liste;
@@ -111,6 +156,7 @@ namespace ProjektManager
                     string indexPfad = Path.Combine(ordner, "lst_projekte_index.json");
 
                     File.WriteAllText(jsonPfad, JsonConvert.SerializeObject(lstKabelListe, Formatting.Indented));
+                    ProjektPfadHelper.TryDeleteLegacyFile(ProjektPfadHelper.LegacyProjektDatei("LST_Projekte", projektName));
 
                     // Listeye kaydet
                     List<string> projektListe = new();
@@ -120,8 +166,11 @@ namespace ProjektManager
                     if (!projektListe.Contains(projektName))
                     {
                         projektListe.Add(projektName);
+                        projektListe = projektListe.Distinct().ToList();
                         File.WriteAllText(indexPfad, JsonConvert.SerializeObject(projektListe, Formatting.Indented));
                     }
+
+                    ProjektPfadHelper.TryDeleteLegacyFile(ProjektPfadHelper.LegacyLSTIndexDatei);
                 }
                 else
                 {
