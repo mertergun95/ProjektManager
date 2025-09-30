@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using ProjektManager.Models;
 using System.Data;
 using System.IO;
-using Newtonsoft.Json;
 
 
 namespace ProjektManager.Views
@@ -145,24 +144,6 @@ namespace ProjektManager.Views
 
             MessageBox.Show($"{_importierteLaengen.Count} Längen wurden erfolgreich übernommen.");
             this.DialogResult = true;
-            // 1. JSON olarak kaydet
-            string projektName = System.IO.Path.GetFileNameWithoutExtension(ExcelPfad);
-            string jsonPfad = System.IO.Path.Combine(ProjektPfadHelper.LWLProjektOrdner, projektName + ".json");
-            File.WriteAllText(jsonPfad, JsonConvert.SerializeObject(ErgebnisProjekt, Formatting.Indented));
-
-            // 2. Index güncelle
-            string indexPfad = ProjektPfadHelper.LWLIndexDatei;
-            List<string> indexListe = new();
-
-            if (File.Exists(indexPfad))
-                indexListe = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(indexPfad)) ?? new();
-
-            if (!indexListe.Contains(projektName))
-            {
-                indexListe.Add(projektName);
-                File.WriteAllText(indexPfad, JsonConvert.SerializeObject(indexListe, Formatting.Indented));
-            }
-
             this.Close();
         }
 

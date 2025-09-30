@@ -1,6 +1,7 @@
 ﻿using ProjektManager.Models;
 using ProjektManager.ViewModels;
 using ProjektManager.Views;
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -152,6 +153,8 @@ namespace ProjektManager
                 if (neuesProjekt != null)
                 {
                     neuesProjekt.Name = nameWindow.ProjektName;
+                    SpeichereLWLProjekt(neuesProjekt, null);
+
                     _viewModel.Projekte.Add(neuesProjekt);
 
                     ProjektSpeicher.Speichern(_viewModel.Projekte.ToList());
@@ -170,6 +173,8 @@ namespace ProjektManager
                 var importWindow = new ProjektImportWindow(ausgewaehlt);
                 if (importWindow.ShowDialog() == true)
                 {
+                    string alterName = ausgewaehlt.Name;
+
                     // İsim güncellemesi
                     ausgewaehlt.Name = nameWindow.ProjektName;
 
@@ -180,10 +185,61 @@ namespace ProjektManager
                         ausgewaehlt.ProjektPfad = importWindow.ErgebnisProjekt.ProjektPfad;
                     }
 
+                    SpeichereLWLProjekt(ausgewaehlt, alterName);
+
                     ProjektSpeicher.Speichern(AlleProjekte);
                     ZeigeSeite(new ProjektUebersichtPage(this, AlleProjekte));
                 }
             }
+        }
+
+        private void SpeichereLWLProjekt(Projekt projekt, string? alterName)
+        {
+            if (projekt == null || string.IsNullOrWhiteSpace(projekt.Name))
+                return;
+
+            Directory.CreateDirectory(ProjektPfadHelper.LWLProjektOrdner);
+
+            string indexPfad = ProjektPfadHelper.LWLIndexDatei;
+            List<string> indexEintraege = new();
+
+            if (File.Exists(indexPfad))
+            {
+                var geleseneEintraege = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(indexPfad));
+                if (geleseneEintraege != null)
+                    indexEintraege = geleseneEintraege;
+            }
+
+            if (!string.IsNullOrWhiteSpace(alterName) && !string.Equals(alterName, projekt.Name, StringComparison.Ordinal))
+            {
+                string alterPfad = Path.Combine(ProjektPfadHelper.LWLProjektOrdner, alterName + ".json");
+                if (File.Exists(alterPfad))
+                    File.Delete(alterPfad);
+
+                indexEintraege.RemoveAll(name => string.Equals(name, alterName, StringComparison.OrdinalIgnoreCase));
+
+                if (!string.IsNullOrWhiteSpace(projekt.ProjektPfad))
+                {
+                    string excelBasierterName = Path.GetFileNameWithoutExtension(projekt.ProjektPfad);
+                    if (!string.IsNullOrWhiteSpace(excelBasierterName) &&
+                        !string.Equals(excelBasierterName, projekt.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        string excelJsonPfad = Path.Combine(ProjektPfadHelper.LWLProjektOrdner, excelBasierterName + ".json");
+                        if (File.Exists(excelJsonPfad))
+                            File.Delete(excelJsonPfad);
+
+                        indexEintraege.RemoveAll(name => string.Equals(name, excelBasierterName, StringComparison.OrdinalIgnoreCase));
+                    }
+                }
+            }
+
+            string neuerPfad = Path.Combine(ProjektPfadHelper.LWLProjektOrdner, projekt.Name + ".json");
+            File.WriteAllText(neuerPfad, JsonConvert.SerializeObject(projekt, Formatting.Indented));
+
+            indexEintraege.RemoveAll(name => string.Equals(name, projekt.Name, StringComparison.OrdinalIgnoreCase));
+            indexEintraege.Add(projekt.Name);
+
+            File.WriteAllText(indexPfad, JsonConvert.SerializeObject(indexEintraege, Formatting.Indented));
         }
 
 
