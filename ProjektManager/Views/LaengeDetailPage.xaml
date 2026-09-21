@@ -65,7 +65,8 @@
                 Padding="20"
                 Margin="20,30,20,30"
                 HorizontalAlignment="Center"
-                Width="560">
+                Width="560"
+                MaxHeight="320">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="12"
                                   ShadowDepth="3"
@@ -74,7 +75,10 @@
                                   Color="#444444"/>
             </Border.Effect>
 
-            <StackPanel x:Name="ZusammenfassungPanel" />
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="ZusammenfassungPanel" />
+            </ScrollViewer>
         </Border>
 
     </Grid>
