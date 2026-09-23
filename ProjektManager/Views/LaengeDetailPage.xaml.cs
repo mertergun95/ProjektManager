@@ -370,7 +370,8 @@ namespace ProjektManager.Views
             var bearbeitenItem = new MenuItem { Header = "Bearbeiten" };
             bearbeitenItem.Click += (se, ev) =>
             {
-                var dialog = new LeistungBearbeitenWindow(leistung) { Owner = Window.GetWindow(this) };
+                var (beschreibungen, bahnseiten) = SammleVorschlaege();
+                var dialog = new LeistungBearbeitenWindow(leistung, beschreibungen, bahnseiten) { Owner = Window.GetWindow(this) };
                 if (dialog.ShowDialog() != true) return;
 
                 double laengeMin = _laenge.Leistungen.Min(l => l.KmVon);
@@ -466,6 +467,25 @@ namespace ProjektManager.Views
         private void FilterCheckBox_Changed(object sender, RoutedEventArgs e)
         {
             ErzeugeLeistungsbloecke();
+        }
+
+        /// <summary>
+        /// Sammelt projektübergreifend bereits verwendete Leistungsbeschreibungen und Bahnseiten
+        /// (häufigste zuerst) als Vorschläge für die Autovervollständigung im Bearbeiten-Dialog.
+        /// </summary>
+        private (List<string> Beschreibungen, List<string> Bahnseiten) SammleVorschlaege()
+        {
+            var alleLeistungen = _main.AlleProjekte.SelectMany(p => p.Laengen).SelectMany(l => l.Leistungen).ToList();
+
+            List<string> HaeufigsteZuerst(Func<Leistung, string> auswahl) => alleLeistungen
+                .Select(auswahl)
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .GroupBy(s => s, StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)
+                .ToList();
+
+            return (HaeufigsteZuerst(l => l.Leistungsbeschreibung), HaeufigsteZuerst(l => l.Bahnseite));
         }
     }
 }
