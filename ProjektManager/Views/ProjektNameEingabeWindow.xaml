@@ -1,10 +1,14 @@
 <Window x:Class="ProjektManager.Views.ProjektNameEingabeWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Projektname eingeben" Height="180" Width="340" WindowStartupLocation="CenterScreen"
+        Title="Projektname eingeben"
+        SizeToContent="WidthAndHeight"
+        MinWidth="360"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
         Background="{StaticResource BackgroundBrush}">
     <StackPanel Margin="20">
-        <TextBlock Text="Bitte geben Sie den Projektnamen ein:" Margin="0,0,0,10" Style="{StaticResource SectionTitleStyle}"/>
+        <TextBlock Text="Bitte geben Sie den Projektnamen ein:" Margin="0,0,0,10" TextWrapping="Wrap" Style="{StaticResource SectionTitleStyle}"/>
         <TextBox x:Name="ProjektNameTextBox" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,16"/>
         <Button Content="OK" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right" Click="OK_Click"/>
     </StackPanel>

@@ -1,4 +1,3 @@
-using ProjektManager.Data;
 using ProjektManager.Models;
 using ProjektManager.Views.Shared;
 using System.Globalization;
@@ -75,7 +74,7 @@ namespace ProjektManager.Views
 
         private void SpeichereAktuellesProjekt()
         {
-            ProjektSpeicher.Speichern(_main.AlleProjekte);
+            _main.SpeichernUndBestaetigen();
         }
 
         private void ÜberprüfeUndAktualisiereLeistung(Leistung geaenderteLeistung)
@@ -279,16 +278,17 @@ namespace ProjektManager.Views
             {
                 container.Children.Add(new Border
                 {
-                    Width = 20,
+                    MinWidth = 20,
                     Height = 20,
                     CornerRadius = new CornerRadius(10),
                     Background = VisualBuilder.Danger,
                     HorizontalAlignment = HorizontalAlignment.Right,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     Margin = new Thickness(0, 0, 4, 4),
+                    Padding = new Thickness(5, 0, 5, 0),
                     Child = new TextBlock
                     {
-                        Text = "€",
+                        Text = leistung.AufmassNummer.HasValue ? $"€ {leistung.AufmassNummer}" : "€",
                         Foreground = Brushes.White,
                         FontWeight = FontWeights.Bold,
                         FontSize = 11,
@@ -348,6 +348,15 @@ namespace ProjektManager.Views
             if (!string.IsNullOrWhiteSpace(leistung.Anmerkung2))
                 panel.Children.Add(new TextBlock { Text = $"Anmerkung: {leistung.Anmerkung2}", Foreground = Brushes.Gray, FontStyle = FontStyles.Italic });
 
+            if (leistung.IstAbgerechnet)
+            {
+                panel.Children.Add(new TextBlock
+                {
+                    Text = leistung.AufmassNummer.HasValue ? $"Abgerechnet in Aufmaß Nr. {leistung.AufmassNummer}" : "Abgerechnet (Aufmaß-Nr. unbekannt)",
+                    FontWeight = FontWeights.SemiBold
+                });
+            }
+
             if (!string.IsNullOrWhiteSpace(leistung.Notiz))
                 panel.Children.Add(new TextBlock { Text = $"Notiz: {leistung.Notiz}", Foreground = Brushes.Red, FontWeight = FontWeights.Bold });
 
@@ -400,14 +409,38 @@ namespace ProjektManager.Views
             };
             contextMenu.Items.Add(erledigtItem);
 
-            var abgerechnetItem = new MenuItem { Header = "Abrechnung umschalten" };
-            abgerechnetItem.Click += (se, ev) =>
+            string abrechnenHeader = auswahl.Count > 1
+                ? $"Als abgerechnet markieren ({auswahl.Count} Positionen) …"
+                : "Als abgerechnet markieren …";
+
+            var abrechnenItem = new MenuItem { Header = abrechnenHeader };
+            abrechnenItem.Click += (se, ev) =>
             {
-                foreach (var l in auswahl) l.IstAbgerechnet = !l.IstAbgerechnet;
+                var dialog = new AufmassNummerWindow(leistung.AufmassNummer) { Owner = Window.GetWindow(this) };
+                if (dialog.ShowDialog() != true) return;
+
+                foreach (var l in auswahl)
+                {
+                    l.IstAbgerechnet = true;
+                    l.AufmassNummer = dialog.AufmassNummer;
+                }
                 SpeichereAktuellesProjekt();
                 ErzeugeLeistungsbloecke();
             };
-            contextMenu.Items.Add(abgerechnetItem);
+            contextMenu.Items.Add(abrechnenItem);
+
+            var abrechnungZuruecksetzenItem = new MenuItem { Header = "Abrechnung zurücksetzen" };
+            abrechnungZuruecksetzenItem.Click += (se, ev) =>
+            {
+                foreach (var l in auswahl)
+                {
+                    l.IstAbgerechnet = false;
+                    l.AufmassNummer = null;
+                }
+                SpeichereAktuellesProjekt();
+                ErzeugeLeistungsbloecke();
+            };
+            contextMenu.Items.Add(abrechnungZuruecksetzenItem);
 
             return contextMenu;
         }

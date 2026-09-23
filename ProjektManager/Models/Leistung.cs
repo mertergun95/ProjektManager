@@ -14,6 +14,9 @@ namespace ProjektManager.Models
         public bool IstFertiggestellt { get; set; }
         public bool IstAbgerechnet { get; set; }
 
+        /// <summary>Nummer des Aufmaßes/der Rechnung, in dem diese Leistung abgerechnet wurde.</summary>
+        public int? AufmassNummer { get; set; }
+
         public string Notiz { get; set; } = string.Empty;
     }
 }
