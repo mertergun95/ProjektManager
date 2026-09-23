@@ -12,6 +12,8 @@ namespace ProjektManager.Views
     public partial class ProjektImportWindow : Window
     {
         private DataTable? _fullExcelData;
+        private string[] _kopfzeile = Array.Empty<string>();
+        private ExcelSpaltenZuordnung _spaltenZuordnung = new();
         private readonly List<Laenge> _importierteLaengen = new();
         private readonly Projekt? _bearbeitetesProjekt;
 
@@ -68,13 +70,26 @@ namespace ProjektManager.Views
             try
             {
                 DateiPfadText.Text = ExcelPfad;
-                _fullExcelData = ExcelReader.LeseExcel(ExcelPfad);
+                (_fullExcelData, _kopfzeile) = ExcelReader.LeseExcelMitKopfzeile(ExcelPfad);
                 ExcelGrid.ItemsSource = _fullExcelData.DefaultView;
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Fehler beim Laden der Datei:\n" + ex.Message, "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void SpaltenZuordnen_Click(object sender, RoutedEventArgs e)
+        {
+            if (_fullExcelData == null)
+            {
+                MessageBox.Show("Bitte wählen Sie zuerst eine Excel-Datei aus.", "Hinweis", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var dialog = new SpaltenZuordnungWindow(_kopfzeile, _spaltenZuordnung) { Owner = this };
+            if (dialog.ShowDialog() == true)
+                _spaltenZuordnung = dialog.Zuordnung;
         }
 
         private void LaengeHinzufuegen_Click(object sender, RoutedEventArgs e)
@@ -91,21 +106,22 @@ namespace ProjektManager.Views
                 laengeName = $"Länge {naechsteNummer}";
 
             var neueLaenge = new Laenge { Bezeichnung = laengeName };
+            var z = _spaltenZuordnung;
 
             foreach (DataRowView selectedRow in ExcelGrid.SelectedItems)
             {
                 var zeile = selectedRow.Row;
-                string zusatz = zeile.Table.Columns.Count > 9 ? (zeile[9]?.ToString() ?? "") : "";
+                string zusatz = $"{ExcelReader.ZellenWert(zeile, z.Anmerkung2A)} {ExcelReader.ZellenWert(zeile, z.Anmerkung2B)}".Trim();
 
                 neueLaenge.Leistungen.Add(new Leistung
                 {
-                    KmVon = ExcelReader.ParseDouble(zeile[1]),
-                    KmBis = ExcelReader.ParseDouble(zeile[2]),
-                    Bahnseite = zeile[3]?.ToString() ?? "",
-                    Leistungsbeschreibung = zeile[4]?.ToString() ?? "",
-                    Anmerkung = zeile[5]?.ToString() ?? "",
-                    LaengeMeter = ExcelReader.ParseDouble(zeile[7]),
-                    Anmerkung2 = $"{zeile[8]} {zusatz}".Trim()
+                    KmVon = ExcelReader.ParseDouble(ExcelReader.ZellenWert(zeile, z.KmVon)),
+                    KmBis = ExcelReader.ParseDouble(ExcelReader.ZellenWert(zeile, z.KmBis)),
+                    Bahnseite = ExcelReader.ZellenWert(zeile, z.Bahnseite) ?? "",
+                    Leistungsbeschreibung = ExcelReader.ZellenWert(zeile, z.Beschreibung) ?? "",
+                    Anmerkung = ExcelReader.ZellenWert(zeile, z.Anmerkung) ?? "",
+                    LaengeMeter = ExcelReader.ParseDouble(ExcelReader.ZellenWert(zeile, z.LaengeMeter)),
+                    Anmerkung2 = zusatz
                 });
             }
 

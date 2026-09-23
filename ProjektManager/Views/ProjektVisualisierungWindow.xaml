@@ -14,7 +14,19 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Name="ProjektTitel" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,16"/>
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Name="ProjektTitel" Style="{StaticResource PageTitleStyle}" VerticalAlignment="Center"/>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Als Excel exportieren" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" Click="ExcelExport_Click"/>
+                <Button Content="Bericht drucken" Style="{StaticResource SecondaryButtonStyle}" Click="BerichtDrucken_Click"/>
+            </StackPanel>
+        </Grid>
 
         <!-- Km- und Längen-Leiste -->
         <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="0" Margin="0,0,0,16">

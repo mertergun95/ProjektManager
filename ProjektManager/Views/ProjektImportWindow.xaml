@@ -27,7 +27,11 @@
                        Style="{StaticResource SectionTitleStyle}"/>
             <Button Content="Datei wählen"
                     Style="{StaticResource PrimaryButtonStyle}"
-                    Click="DateiWaehlen_Click"/>
+                    Click="DateiWaehlen_Click"
+                    Margin="0,0,10,0"/>
+            <Button Content="Spalten zuordnen …"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Click="SpaltenZuordnen_Click"/>
         </StackPanel>
 
         <TextBlock Grid.Row="1"

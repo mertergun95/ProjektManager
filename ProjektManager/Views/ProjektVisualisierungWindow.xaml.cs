@@ -1,3 +1,5 @@
+using Microsoft.Win32;
+using ProjektManager.Helpers;
 using ProjektManager.Models;
 using ProjektManager.Views.Shared;
 using System.Linq;
@@ -87,6 +89,39 @@ namespace ProjektManager.Views
             }
 
             LaengeBar.Children.Add(new Border { Width = 20, Height = 0, Background = Brushes.Transparent });
+        }
+
+        private void ExcelExport_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new SaveFileDialog
+            {
+                Filter = "Excel-Datei (*.xlsx)|*.xlsx",
+                FileName = $"{_projekt.Name}_Bericht.xlsx"
+            };
+
+            if (dialog.ShowDialog() != true) return;
+
+            try
+            {
+                BerichtExporter.ExportiereAlsExcel(_projekt, dialog.FileName);
+                _main.ZeigeStatus("Excel-Bericht gespeichert");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Fehler beim Exportieren:\n" + ex.Message, "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BerichtDrucken_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                BerichtDrucker.DruckeProjektBericht(_projekt);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Fehler beim Drucken:\n" + ex.Message, "Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void ErzeugeProjektZusammenfassung()

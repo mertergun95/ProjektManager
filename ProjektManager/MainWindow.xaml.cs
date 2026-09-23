@@ -1,10 +1,13 @@
 using ProjektManager.Data;
+using ProjektManager.Helpers;
 using ProjektManager.Models;
 using ProjektManager.ViewModels;
 using ProjektManager.Views;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace ProjektManager
@@ -33,7 +36,13 @@ namespace ProjektManager
                 StatusBorder.Visibility = Visibility.Collapsed;
             };
 
+            DunkelModusButton.Content = EinstellungenHelper.Laden().DunkelModus ? "☀" : "🌙";
+
             ZeigeUebersicht();
+
+            var updateHinweis = VersionHelper.PruefeAufNeuereVersion();
+            if (updateHinweis != null)
+                ZeigeStatus(updateHinweis, dauerhaft: true, istHinweis: true);
         }
 
         public void ZeigeSeite(UserControl seite)
@@ -57,19 +66,70 @@ namespace ProjektManager
             BackButton.Visibility = Visibility.Collapsed;
         }
 
-        /// <summary>Speichert alle Projekte und zeigt kurz eine Bestätigung in der Statusleiste an.</summary>
+        /// <summary>
+        /// Speichert alle Projekte und zeigt kurz eine Bestätigung in der Statusleiste an. Warnt
+        /// vorher, falls die Datei seit dem letzten Laden/Speichern DIESER Sitzung von außen
+        /// verändert wurde (z.B. durch eine andere, gleichzeitig laufende Sitzung auf der
+        /// gemeinsamen OneDrive-Datei) – ein Speichern würde diese fremden Änderungen sonst
+        /// stillschweigend überschreiben.
+        /// </summary>
         public void SpeichernUndBestaetigen()
         {
+            if (ProjektSpeicher.WurdeExternGeaendert())
+            {
+                var ergebnis = MessageBox.Show(
+                    "Die Projektdatei wurde zwischenzeitlich von einer anderen Sitzung geändert " +
+                    "(z.B. auf einem anderen Rechner). Wenn Sie jetzt speichern, gehen die dortigen " +
+                    "Änderungen verloren.\n\nTrotzdem überschreiben?",
+                    "Änderungskonflikt", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+                if (ergebnis != MessageBoxResult.Yes)
+                {
+                    ZeigeStatus("Nicht gespeichert (Konflikt)");
+                    return;
+                }
+            }
+
             ProjektSpeicher.Speichern(AlleProjekte);
             ZeigeStatus("Gespeichert");
         }
 
-        public void ZeigeStatus(string text)
+        /// <param name="dauerhaft">Wenn true, blendet sich die Leiste nicht automatisch aus und zeigt einen Schließen-Button.</param>
+        /// <param name="istHinweis">Wenn true, wird die Leiste als neutraler Hinweis statt als grüne Erfolgsmeldung eingefärbt.</param>
+        public void ZeigeStatus(string text, bool dauerhaft = false, bool istHinweis = false)
         {
             StatusText.Text = text;
+            StatusBorder.Background = (Brush)Resources[istHinweis ? "AccentSoftBrush" : "SuccessSoftBrush"];
+            StatusText.Foreground = (Brush)Resources[istHinweis ? "AccentBrush" : "SuccessBrush"];
+            StatusSchliessenButton.Visibility = dauerhaft ? Visibility.Visible : Visibility.Collapsed;
             StatusBorder.Visibility = Visibility.Visible;
+
             _statusTimer.Stop();
-            _statusTimer.Start();
+            if (!dauerhaft) _statusTimer.Start();
+        }
+
+        private void StatusSchliessen_Click(object sender, RoutedEventArgs e)
+        {
+            StatusBorder.Visibility = Visibility.Collapsed;
+        }
+
+        private void DunkelModus_Click(object sender, RoutedEventArgs e)
+        {
+            var einstellungen = EinstellungenHelper.Laden();
+            einstellungen.DunkelModus = !einstellungen.DunkelModus;
+            EinstellungenHelper.Speichern(einstellungen);
+
+            var ergebnis = MessageBox.Show(
+                $"Der {(einstellungen.DunkelModus ? "Dunkelmodus" : "Hellmodus")} wird nach einem Neustart aktiv.\n\nJetzt neu starten?",
+                "Neustart erforderlich", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (ergebnis != MessageBoxResult.Yes) return;
+
+            var exePfad = Process.GetCurrentProcess().MainModule?.FileName;
+            if (!string.IsNullOrEmpty(exePfad))
+                Process.Start(exePfad);
+
+            Application.Current.Shutdown();
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)

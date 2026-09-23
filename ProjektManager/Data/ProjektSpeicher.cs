@@ -14,6 +14,28 @@ namespace ProjektManager.Data
 
         private static string SpeicherPfad => ProjektPfadHelper.ProjekteDateiPfad;
 
+        /// <summary>
+        /// Schreibzeitpunkt der projekte.json, wie er beim letzten Laden oder Speichern DIESER
+        /// Sitzung beobachtet wurde. Dient als Basislinie, um zu erkennen, ob eine andere Sitzung
+        /// (z.B. auf einem anderen Rechner über die gemeinsame OneDrive-Datei) die Datei seitdem
+        /// geändert hat.
+        /// </summary>
+        private static DateTime? _bekannteSchreibzeit;
+
+        /// <summary>
+        /// Prüft, ob die Datei auf der Festplatte seit dem letzten Laden/Speichern DIESER Sitzung
+        /// von außen (z.B. einer anderen, gleichzeitig laufenden Sitzung) verändert wurde. Damit
+        /// lässt sich vor dem Überschreiben warnen, statt fremde Änderungen stillschweigend zu
+        /// verlieren.
+        /// </summary>
+        public static bool WurdeExternGeaendert()
+        {
+            var pfad = SpeicherPfad;
+            if (!File.Exists(pfad) || _bekannteSchreibzeit == null) return false;
+
+            return File.GetLastWriteTimeUtc(pfad) != _bekannteSchreibzeit.Value;
+        }
+
         public static void Speichern(List<Projekt> projekte)
         {
             var pfad = SpeicherPfad;
@@ -30,6 +52,8 @@ namespace ProjektManager.Data
 
             var json = JsonSerializer.Serialize(projekte, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(pfad, json);
+
+            _bekannteSchreibzeit = File.GetLastWriteTimeUtc(pfad);
         }
 
         /// <summary>
@@ -72,7 +96,10 @@ namespace ProjektManager.Data
             var projekte = LeseProjektDatei(pfad);
 
             if (projekte.Count > 0)
+            {
+                _bekannteSchreibzeit = File.GetLastWriteTimeUtc(pfad);
                 return projekte;
+            }
 
             var legacyPfad = ProjektPfadHelper.LegacyProjekteDateiPfad;
             var legacyProjekte = LeseProjektDatei(legacyPfad);

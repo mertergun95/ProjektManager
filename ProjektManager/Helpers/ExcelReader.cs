@@ -9,6 +9,16 @@ namespace ProjektManager.Helpers
     {
         public static DataTable LeseExcel(string filePath, int skipRows = 1)
         {
+            return LeseExcelMitKopfzeile(filePath, skipRows).Tabelle;
+        }
+
+        /// <summary>
+        /// Liest die Excel-Datei und gibt zusätzlich die Textwerte der ersten (übersprungenen)
+        /// Zeile zurück, damit eine Spaltenzuordnung dem Benutzer die tatsächlichen Spaltentitel
+        /// statt bloßer Spaltennummern anzeigen kann.
+        /// </summary>
+        public static (DataTable Tabelle, string[] Kopfzeile) LeseExcelMitKopfzeile(string filePath, int skipRows = 1)
+        {
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
             using var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
@@ -25,13 +35,24 @@ namespace ProjektManager.Helpers
             var dataSet = reader.AsDataSet(config);
             var table = dataSet.Tables[0];
 
+            var kopfzeile = table.Rows.Count > 0
+                ? table.Rows[0].ItemArray.Select(v => v?.ToString()?.Trim() ?? string.Empty).ToArray()
+                : Array.Empty<string>();
+
             for (int i = 0; i < skipRows; i++)
             {
                 if (table.Rows.Count > 0)
                     table.Rows.RemoveAt(0);
             }
 
-            return table;
+            return (table, kopfzeile);
+        }
+
+        /// <summary>Liest eine Zelle sicher aus, auch wenn der Spaltenindex außerhalb der Tabelle liegt.</summary>
+        public static string? ZellenWert(DataRow zeile, int spaltenIndex)
+        {
+            if (spaltenIndex < 0 || spaltenIndex >= zeile.Table.Columns.Count) return null;
+            return zeile[spaltenIndex]?.ToString()?.Trim();
         }
 
         /// <summary>
