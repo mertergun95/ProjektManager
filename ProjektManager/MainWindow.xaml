@@ -24,6 +24,10 @@
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="DunkelModusButton"
+                            Style="{StaticResource IconButtonStyle}"
+                            Margin="0,0,8,0" Click="DunkelModus_Click"
+                            ToolTip="Dunkelmodus umschalten (Neustart erforderlich)"/>
                     <Button x:Name="ProjektLoeschenButton" Content="Projekt löschen"
                             Style="{StaticResource DangerButtonStyle}"
                             Margin="8,0,0,0" Click="ProjektLoeschen_Click"/>
@@ -37,14 +41,23 @@
             </DockPanel>
         </Border>
 
-        <!-- Statusleiste (z.B. "Gespeichert"-Bestätigung) -->
+        <!-- Statusleiste (z.B. "Gespeichert"-Bestätigung oder Update-Hinweis) -->
         <Border x:Name="StatusBorder" DockPanel.Dock="Bottom"
-                Background="{StaticResource SuccessSoftBrush}"
                 BorderBrush="{StaticResource BorderBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="20,8"
                 Visibility="Collapsed">
-            <TextBlock x:Name="StatusText" Foreground="{StaticResource SuccessBrush}" FontWeight="SemiBold" FontSize="12"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="StatusText" Grid.Column="0" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                <Button x:Name="StatusSchliessenButton" Grid.Column="1" Content="✕"
+                        Style="{StaticResource IconButtonStyle}"
+                        Width="26" Height="26" FontSize="11"
+                        Click="StatusSchliessen_Click" Visibility="Collapsed"/>
+            </Grid>
         </Border>
 
         <!-- Inhalt -->

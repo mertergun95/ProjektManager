@@ -3,11 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:ProjektManager"
              StartupUri="MainWindow.xaml">
-    <Application.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Themes/Theme.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Application.Resources>
+    <!-- Die Farbpalette (hell/dunkel) wird abhängig von den gespeicherten Einstellungen
+         in App.xaml.cs vor dem Start des MainWindow zusammengestellt. -->
 </Application>

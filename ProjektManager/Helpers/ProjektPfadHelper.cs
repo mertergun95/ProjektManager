@@ -11,6 +11,16 @@ namespace ProjektManager.Helpers
             "Gleisbau",
             "ProjektManagerProgramm");
 
+        /// <summary>Gemeinsamer Basisordner (OneDrive), z.B. für Einstellungen und Versionsprüfung.</summary>
+        public static string BasisOrdner
+        {
+            get
+            {
+                Directory.CreateDirectory(BaseOrdner);
+                return BaseOrdner;
+            }
+        }
+
         private static readonly string OldBaseOrdner = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             "OneDrive - Klefenz GmbH",
