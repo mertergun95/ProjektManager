@@ -196,6 +196,42 @@ namespace ProjektManager.Views.Shared
             return LaufendeNummer.Replace(beschreibung, "").Trim();
         }
 
+        /// <summary>Gesamt-/Erledigt-/Abgerechnet-Meter und die daraus berechneten Prozentsätze.</summary>
+        public static (decimal GesamtMeter, decimal ErledigtMeter, decimal AbgerechnetMeter, double ErledigtProzent, double AbgerechnetProzent) BerechneGesamt(IReadOnlyCollection<Leistung> leistungen)
+        {
+            decimal gesamtMeter = leistungen.Sum(l => (decimal)(l.LaengeMeter ?? 0));
+            decimal erledigtMeter = leistungen.Where(l => l.IstFertiggestellt).Sum(l => (decimal)(l.LaengeMeter ?? 0));
+            decimal abgerechnetMeter = leistungen.Where(l => l.IstAbgerechnet).Sum(l => (decimal)(l.LaengeMeter ?? 0));
+
+            double erledigtProzent = gesamtMeter > 0 ? (double)(erledigtMeter / gesamtMeter) * 100 : 0;
+            double abgerechnetProzent = gesamtMeter > 0 ? (double)(abgerechnetMeter / gesamtMeter) * 100 : 0;
+
+            return (gesamtMeter, erledigtMeter, abgerechnetMeter, erledigtProzent, abgerechnetProzent);
+        }
+
+        /// <summary>
+        /// Gruppiert Leistungen (standardmäßig über <see cref="NormalisiereGruppenSchluessel"/>) und
+        /// berechnet je Gruppe Gesamt-/Erledigt-Menge. Wird sowohl für die Bildschirm-Zusammenfassung
+        /// als auch für den gedruckten Bericht verwendet, damit beide exakt dieselben Zahlen zeigen.
+        /// </summary>
+        public static IEnumerable<(string Titel, double Gesamt, double Erledigt, bool IstStueck)> BerechneGruppen(
+            IEnumerable<Leistung> leistungen, Func<string, string>? gruppierung = null)
+        {
+            var gruppierungsFunktion = gruppierung ?? NormalisiereGruppenSchluessel;
+
+            return leistungen
+                .GroupBy(l => gruppierungsFunktion(l.Leistungsbeschreibung))
+                .Select(g =>
+                {
+                    bool istStueck = g.All(l => (l.LaengeMeter ?? 0) == 0);
+                    double gesamt = istStueck ? g.Count() : g.Sum(l => l.LaengeMeter ?? 0);
+                    double erledigt = istStueck
+                        ? g.Count(l => l.IstFertiggestellt)
+                        : g.Where(l => l.IstFertiggestellt).Sum(l => l.LaengeMeter ?? 0);
+                    return (Titel: g.Key, Gesamt: gesamt, Erledigt: erledigt, IstStueck: istStueck);
+                });
+        }
+
         /// <summary>
         /// Baut die komplette Fortschritts-Zusammenfassung (Erledigt-/Abgerechnet-Donuts + je Gruppe
         /// eine Fortschrittszeile) für eine Menge von Leistungen. <paramref name="gruppierung"/> erlaubt
@@ -206,12 +242,7 @@ namespace ProjektManager.Views.Shared
         {
             var wurzel = new StackPanel { Orientation = Orientation.Vertical, HorizontalAlignment = HorizontalAlignment.Stretch };
 
-            decimal gesamtMeter = leistungen.Sum(l => (decimal)(l.LaengeMeter ?? 0));
-            decimal erledigtMeter = leistungen.Where(l => l.IstFertiggestellt).Sum(l => (decimal)(l.LaengeMeter ?? 0));
-            decimal abgerechnetMeter = leistungen.Where(l => l.IstAbgerechnet).Sum(l => (decimal)(l.LaengeMeter ?? 0));
-
-            double erledigtProzent = gesamtMeter > 0 ? (double)(erledigtMeter / gesamtMeter) * 100 : 0;
-            double abgerechnetProzent = gesamtMeter > 0 ? (double)(abgerechnetMeter / gesamtMeter) * 100 : 0;
+            var (_, _, _, erledigtProzent, abgerechnetProzent) = BerechneGesamt(leistungen);
 
             var donutZeile = new StackPanel
             {
@@ -223,21 +254,7 @@ namespace ProjektManager.Views.Shared
             donutZeile.Children.Add(ErzeugeDonut(abgerechnetProzent, "Abgerechnet", Accent));
             wurzel.Children.Add(donutZeile);
 
-            var gruppierungsFunktion = gruppierung ?? NormalisiereGruppenSchluessel;
-
-            var gruppen = leistungen
-                .GroupBy(l => gruppierungsFunktion(l.Leistungsbeschreibung))
-                .Select(g =>
-                {
-                    bool istStueck = g.All(l => (l.LaengeMeter ?? 0) == 0);
-                    double gesamt = istStueck ? g.Count() : g.Sum(l => l.LaengeMeter ?? 0);
-                    double erledigt = istStueck
-                        ? g.Count(l => l.IstFertiggestellt)
-                        : g.Where(l => l.IstFertiggestellt).Sum(l => l.LaengeMeter ?? 0);
-                    return (Titel: g.Key, Gesamt: gesamt, Erledigt: erledigt, IstStueck: istStueck);
-                });
-
-            foreach (var gruppe in gruppen)
+            foreach (var gruppe in BerechneGruppen(leistungen, gruppierung))
             {
                 wurzel.Children.Add(ErzeugeFortschrittsZeile($"• {gruppe.Titel}", gruppe.Erledigt, gruppe.Gesamt, gruppe.IstStueck));
             }
