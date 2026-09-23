@@ -1,25 +1,24 @@
-﻿<UserControl x:Class="ProjektManager.Views.LaengeDetailPage"
+<UserControl x:Class="ProjektManager.Views.LaengeDetailPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             Height="Auto" Width="Auto">
+             Background="{StaticResource BackgroundBrush}">
 
-    <Grid x:Name="LayoutRoot" Background="#F0F0F0">
+    <Grid x:Name="LayoutRoot" Margin="24">
 
-        <!-- Satır yapısı: Filtre + Scroll alanı + Alt özet -->
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Filtre Satırı -->
+            <!-- Filter -->
             <RowDefinition Height="Auto"/>
-            <!-- km-Leiste + Leistung Bloklarının bulunduğu, her zaman tam görünen üst kısım -->
+            <!-- km-Leiste + Leistungsblöcke: immer vollständig sichtbar -->
             <RowDefinition Height="*"/>
-            <!-- Özet Satırı: kalan alanı kaplar, taştığında kendi içinde kaydırır -->
+            <!-- Zusammenfassung: nimmt den restlichen Platz ein, scrollt bei Bedarf -->
         </Grid.RowDefinitions>
 
-        <!-- 🧰 FİLTRE SATIRI -->
-        <StackPanel Orientation="Horizontal" Margin="20,10,20,0" Grid.Row="0">
+        <!-- Filter -->
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,12" Grid.Row="0">
             <CheckBox x:Name="CheckBoxNurErledigt" Content="Nur erledigte anzeigen"
                       Margin="0,0,20,0"
                       Checked="FilterCheckBox_Changed"
@@ -30,55 +29,23 @@
                       Unchecked="FilterCheckBox_Changed"/>
         </StackPanel>
 
-        <!-- 🧭 ÜST KISIM: km-cetveli + Leistung blokları (her zaman tam görünür) -->
-        <ScrollViewer Grid.Row="1"
-                      VerticalScrollBarVisibility="Disabled"
-                      HorizontalScrollBarVisibility="Auto"
-                      Margin="20,10,20,0">
-            <StackPanel Orientation="Vertical">
-
-                <!-- Länge başlığı -->
-                <TextBlock Name="LaengeTitel"
-                           FontSize="22"
-                           FontWeight="Bold"
-                           Foreground="#333333"
-                           Margin="0 0 0 20"/>
-
-                <!-- KmBar -->
-                <Canvas Name="KmBar"
-                        Height="80"
-                        Background="#F0F0F0" />
-
-                <!-- Leistungsbeschreibung Bar -->
-                <StackPanel Name="LeistungsBar"
-                            Orientation="Horizontal"
-                            Background="#D0D0D0"
-                            Height="80" />
-
-            </StackPanel>
-        </ScrollViewer>
-
-        <!-- 🧾 ALT KISIM: Özet Kartı (kalan alanı kaplar, taşarsa kendi içinde kaydırır) -->
-        <Border Grid.Row="2"
-                Background="#E0E0E0"
-                CornerRadius="12"
-                Padding="20"
-                Margin="20,30,20,30"
-                HorizontalAlignment="Center"
-                Width="560">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="12"
-                                  ShadowDepth="3"
-                                  Direction="270"
-                                  Opacity="0.2"
-                                  Color="#444444"/>
-            </Border.Effect>
-
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-                <StackPanel x:Name="ZusammenfassungPanel" />
+        <!-- km-Leiste + Leistungsblöcke -->
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="8" Margin="0,0,0,16">
+            <ScrollViewer VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Auto">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Name="LaengeTitel" Style="{StaticResource PageTitleStyle}" FontSize="20" Margin="8,4,8,16"/>
+                    <Canvas Name="KmBar" Height="70"/>
+                    <StackPanel Name="LeistungsBar" Orientation="Horizontal" Height="70"/>
+                </StackPanel>
             </ScrollViewer>
         </Border>
+
+        <!-- Zusammenfassung -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Border Style="{StaticResource CardStyle}" HorizontalAlignment="Center" Width="560">
+                <StackPanel x:Name="ZusammenfassungPanel"/>
+            </Border>
+        </ScrollViewer>
 
     </Grid>
 </UserControl>

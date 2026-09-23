@@ -19,7 +19,7 @@ namespace ProjektManager.Views
     /// </summary>
     public partial class ProjektNameEingabeWindow : Window
     {
-        public string ProjektName { get; private set; }
+        public string ProjektName { get; private set; } = string.Empty;
 
         public ProjektNameEingabeWindow()
         {

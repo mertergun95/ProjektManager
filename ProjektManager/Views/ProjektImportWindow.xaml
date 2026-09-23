@@ -1,15 +1,15 @@
-﻿<Window x:Class="ProjektManager.Views.ProjektImportWindow"
+<Window x:Class="ProjektManager.Views.ProjektImportWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Neues Projekt importieren"
-        Height="600"
-        Width="800"
+        Title="Projekt importieren"
+        Height="700"
+        Width="900"
         WindowState="Maximized"
         WindowStyle="SingleBorderWindow"
         ResizeMode="CanResize"
-        Background="#F0F0F0">
+        Background="{StaticResource BackgroundBrush}">
 
-    <Grid Margin="20">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -19,109 +19,90 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Açıklama + Dosya Seç -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock Text="Projekt Excel-Datei auswählen:"
-                       Margin="0,0,10,0"
+        <!-- Datei auswählen -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,4">
+            <TextBlock Text="Excel-Datei auswählen:"
+                       Margin="0,0,12,0"
                        VerticalAlignment="Center"
-                       FontWeight="Bold"/>
+                       Style="{StaticResource SectionTitleStyle}"/>
             <Button Content="Datei wählen"
-                    Width="150"
-                    Click="DateiWaehlen_Click"
-                    Background="#D0D0D0"
-                    FontWeight="Bold"/>
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Click="DateiWaehlen_Click"/>
         </StackPanel>
 
-        <!-- Seçilen dosya yolu -->
         <TextBlock Grid.Row="1"
                    Name="DateiPfadText"
-                   Margin="0 10 0 10"
+                   Margin="0,4,0,12"
                    TextWrapping="Wrap"
-                   FontStyle="Italic"
-                   Foreground="Gray"/>
+                   Style="{StaticResource MutedTextStyle}"/>
 
-        <!-- Excel Tablosu -->
-        <DataGrid Grid.Row="2"
-                  Name="ExcelGrid"
-                  AutoGenerateColumns="True"
-                  Margin="0 10 0 10"
-                  Background="White"
-                  AlternatingRowBackground="#F9F9F9"
-                  GridLinesVisibility="None"
-                  HeadersVisibility="Column"
-                  CanUserAddRows="False"/>
+        <!-- Excel Tabelle -->
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="1" Margin="0,0,0,16">
+            <DataGrid Name="ExcelGrid"
+                      AutoGenerateColumns="True"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      AlternatingRowBackground="{StaticResource SurfaceAltBrush}"
+                      GridLinesVisibility="None"
+                      HeadersVisibility="Column"
+                      CanUserAddRows="False"/>
+        </Border>
 
-        <!-- Länge ekleme -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0 10 0 10">
+        <!-- Länge erstellen -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
             <TextBox Name="LaengeNameBox"
-                     Width="200"
-                     Height="30"
-                     FontSize="14"
-                     Padding="5"
-                     VerticalContentAlignment="Center"
+                     Width="220"
+                     Style="{StaticResource InputTextBoxStyle}"
                      Margin="0,0,10,0"
                      Text="Länge 1"/>
             <Button Content="Länge hinzufügen"
-                    Width="150"
-                    Height="30"
+                    Style="{StaticResource PrimaryButtonStyle}"
                     Click="LaengeHinzufuegen_Click"
-                    Background="#C8E6C9"
-                    FontWeight="Bold"
-                    Margin="0,0,10,0"/>
-            <Button Content="Fertigstellen"
-                    Width="120"
-                    Height="30"
-                    Click="Fertigstellen_Click"
-                    Background="#BBDEFB"
-                    FontWeight="Bold"
                     Margin="0,0,10,0"/>
             <Button Content="Länge löschen"
-                    Width="120"
-                    Height="30"
-                    Click="LaengeLoeschen_Click"
-                    Background="#FFCDD2"
-                    FontWeight="Bold"/>
+                    Style="{StaticResource DangerButtonStyle}"
+                    Click="LaengeLoeschen_Click"/>
         </StackPanel>
 
-        <!-- Länge listesi -->
-        <ListBox Grid.Row="4"
-                 Name="LaengenListe"
-                 Height="150"
-                 Margin="0,0,0,10"
-                 FontSize="14"
-                 MouseDoubleClick="LaengenListe_MouseDoubleClick"
-                 Background="WhiteSmoke"/>
+        <!-- Länge Liste -->
+        <Border Grid.Row="4" Style="{StaticResource CardStyle}" Padding="4" Margin="0,0,0,12">
+            <ListBox Name="LaengenListe"
+                     Height="150"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     MouseDoubleClick="LaengenListe_MouseDoubleClick"/>
+        </Border>
 
-        <!-- Länge düzenleme -->
-        <StackPanel Grid.Row="5"
-                    Orientation="Horizontal"
-                    VerticalAlignment="Center"
-                    Margin="0,10,0,0">
-            <TextBox Name="LaengeUmbenennenBox"
-                     Width="200"
-                     Height="30"
-                     FontSize="14"
-                     Padding="5"
-                     VerticalContentAlignment="Center"
-                     Margin="0,0,10,0"/>
-            <Button Content="Umbenennen"
-                    Width="100"
-                    Height="30"
-                    Click="LaengeUmbenennen_Click"
-                    Background="#E0E0E0"
-                    FontWeight="Bold"
-                    Margin="0,0,10,0"/>
-            <Button Content="↑"
-                    Width="40"
-                    Height="30"
-                    Click="LaengeNachOben_Click"
-                    FontWeight="Bold"
-                    Margin="0,0,5,0"/>
-            <Button Content="↓"
-                    Width="40"
-                    Height="30"
-                    Click="LaengeNachUnten_Click"
-                    FontWeight="Bold"/>
-        </StackPanel>
+        <!-- Länge umbenennen / sortieren / abschließen -->
+        <Grid Grid.Row="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBox Name="LaengeUmbenennenBox"
+                         Width="220"
+                         Style="{StaticResource InputTextBoxStyle}"
+                         Margin="0,0,10,0"/>
+                <Button Content="Umbenennen"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Click="LaengeUmbenennen_Click"
+                        Margin="0,0,10,0"/>
+                <Button Content="↑" Width="36"
+                        Style="{StaticResource IconButtonStyle}"
+                        Click="LaengeNachOben_Click"
+                        Margin="0,0,6,0"/>
+                <Button Content="↓" Width="36"
+                        Style="{StaticResource IconButtonStyle}"
+                        Click="LaengeNachUnten_Click"/>
+            </StackPanel>
+
+            <Button Grid.Column="1"
+                    Content="Fertigstellen"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Padding="24,10"
+                    Click="Fertigstellen_Click"/>
+        </Grid>
     </Grid>
 </Window>
