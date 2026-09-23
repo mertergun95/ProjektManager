@@ -9,12 +9,13 @@ using System.Windows.Media;
 namespace ProjektManager.Helpers
 {
     /// <summary>
-    /// Erstellt einen gestalteten, druckfähigen Projektbericht im Querformat: eine Kopfzeile,
-    /// darunter eine zweispaltige "Dashboard"-Zeile (Kennzahlen-Karten links, Fortschritt nach
-    /// Leistungsart mit echten Balken rechts) – das nutzt die Breite des Querformats sinnvoll aus
-    /// statt nur ein Hochformat-Layout zu strecken – und darunter je Länge eine breite,
-    /// übersichtliche Tabelle. Zeigt den Windows-Druckdialog an; über "Microsoft Print to PDF"
-    /// lässt sich der Bericht so auch ohne zusätzliche PDF-Bibliothek als Datei speichern.
+    /// Erstellt einen gestalteten, druckfähigen Projektbericht im Querformat: Kopfzeile, drei
+    /// Kennzahlen-Karten über die volle Breite, eine Tabelle "Fortschritt nach Leistungsart" mit
+    /// echten Balken je Zeile, und je Länge eine breite, übersichtliche Tabelle. Alle Abschnitte
+    /// mit potenziell vielen Zeilen sind als echte FlowDocument-Tabellen umgesetzt, damit sie bei
+    /// Bedarf sauber über mehrere Seiten laufen, statt am Seitenende abgeschnitten zu werden.
+    /// Zeigt den Windows-Druckdialog an; über "Microsoft Print to PDF" lässt sich der Bericht so
+    /// auch ohne zusätzliche PDF-Bibliothek als Datei speichern.
     /// </summary>
     public static class BerichtDrucker
     {
@@ -30,8 +31,8 @@ namespace ProjektManager.Helpers
         {
             var printDialog = new PrintDialog();
 
-            // Der Bericht ist für Querformat gestaltet (breite Dashboard-Zeile, luftige Tabellen);
-            // das wird als Vorauswahl im Druckdialog gesetzt, der Benutzer kann es dort noch ändern.
+            // Der Bericht ist für Querformat gestaltet (breite Tabellen, viel Platz je Spalte);
+            // das wird als Vorauswahl im Druckdialog gesetzt, der Benutzer kann es dort ändern.
             try { printDialog.PrintTicket.PageOrientation = PageOrientation.Landscape; }
             catch { /* falls der Drucker Querformat nicht unterstützt, Standard belassen */ }
 
@@ -51,13 +52,19 @@ namespace ProjektManager.Helpers
                 PagePadding = new Thickness(48, 34, 48, 34),
                 FontFamily = new FontFamily("Segoe UI"),
                 FontSize = 11,
-                Foreground = TextDunkel
+                Foreground = TextDunkel,
+                // Ohne explizite ColumnWidth berechnet FlowDocument selbst eine "lesefreundliche"
+                // schmale Spaltenbreite und reißt den Bericht bei breiten (Querformat-)Seiten in
+                // mehrere Zeitungs-Spalten auseinander. PositiveInfinity erzwingt EINE Spalte über
+                // die volle Seitenbreite.
+                ColumnWidth = double.PositiveInfinity
             };
 
             dokument.Blocks.Add(ErzeugeKopfbereich(projekt));
 
             var alleLeistungen = projekt.Laengen.SelectMany(l => l.Leistungen).ToList();
-            dokument.Blocks.Add(ErzeugeDashboardZeile(alleLeistungen));
+            dokument.Blocks.Add(ErzeugeKennzahlenLeiste(alleLeistungen));
+            dokument.Blocks.AddRange(ErzeugeGruppenTabelle(alleLeistungen));
 
             foreach (var laenge in projekt.Laengen)
             {
@@ -98,114 +105,123 @@ namespace ProjektManager.Helpers
             return new BlockUIContainer(wrapper);
         }
 
-        /// <summary>
-        /// Zweispaltige Dashboard-Zeile für die Breite des Querformats: links drei gestapelte
-        /// Kennzahlen-Karten, rechts der Fortschritt je Leistungsart mit echten Balken.
-        /// </summary>
-        private static Block ErzeugeDashboardZeile(List<Leistung> alleLeistungen)
-        {
-            var raster = new Grid();
-            raster.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            raster.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(16) });
-            raster.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.6, GridUnitType.Star) });
-
-            var kennzahlen = ErzeugeKennzahlenSpalte(alleLeistungen);
-            Grid.SetColumn(kennzahlen, 0);
-
-            var gruppen = ErzeugeGruppenKarte(alleLeistungen);
-            Grid.SetColumn(gruppen, 2);
-
-            raster.Children.Add(kennzahlen);
-            raster.Children.Add(gruppen);
-
-            return new BlockUIContainer(new Border { Margin = new Thickness(0, 0, 0, 26), Child = raster });
-        }
-
-        private static Border ErzeugeKennzahlenSpalte(List<Leistung> alleLeistungen)
+        /// <summary>Drei Kennzahlen-Karten über die volle Seitenbreite (fixe, geringe Höhe – unkritisch für die Seitenaufteilung).</summary>
+        private static Block ErzeugeKennzahlenLeiste(List<Leistung> alleLeistungen)
         {
             var (gesamtMeter, erledigtMeter, abgerechnetMeter, erledigtProzent, abgerechnetProzent) = VisualBuilder.BerechneGesamt(alleLeistungen);
 
-            var stack = new StackPanel();
-            stack.Children.Add(ErzeugeKennzahlKarte("Gesamtlänge", $"{gesamtMeter:N0} m", null, TextDunkel, istErsteKarte: true));
-            stack.Children.Add(ErzeugeKennzahlKarte("Erledigt", $"{erledigtProzent:F0} %", $"{erledigtMeter:N0} m", Erfolg, istErsteKarte: false));
-            stack.Children.Add(ErzeugeKennzahlKarte("Abgerechnet", $"{abgerechnetProzent:F0} %", $"{abgerechnetMeter:N0} m", Akzent, istErsteKarte: false));
+            var raster = new Grid();
+            raster.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            raster.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            raster.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            return new Border { BorderBrush = LinieHell, BorderThickness = new Thickness(1), Padding = new Thickness(18, 4, 18, 4), Child = stack };
+            var karte1 = ErzeugeKennzahlKarte("Gesamtlänge", $"{gesamtMeter:N0} m", null, TextDunkel, istErsteKarte: true);
+            var karte2 = ErzeugeKennzahlKarte("Erledigt", $"{erledigtProzent:F0} %", $"{erledigtMeter:N0} m", Erfolg, istErsteKarte: false);
+            var karte3 = ErzeugeKennzahlKarte("Abgerechnet", $"{abgerechnetProzent:F0} %", $"{abgerechnetMeter:N0} m", Akzent, istErsteKarte: false);
+
+            Grid.SetColumn(karte1, 0);
+            Grid.SetColumn(karte2, 1);
+            Grid.SetColumn(karte3, 2);
+            raster.Children.Add(karte1);
+            raster.Children.Add(karte2);
+            raster.Children.Add(karte3);
+
+            var rahmen = new Border
+            {
+                BorderBrush = LinieHell,
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(0, 16, 0, 16),
+                Margin = new Thickness(0, 0, 0, 26),
+                Child = raster
+            };
+
+            return new BlockUIContainer(rahmen);
         }
 
         private static Border ErzeugeKennzahlKarte(string label, string wert, string? unterzeile, Brush wertFarbe, bool istErsteKarte)
         {
-            var zeile = new Grid { Margin = new Thickness(0, 14, 0, 14) };
-            zeile.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            zeile.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var inhalt = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
+            inhalt.Children.Add(new TextBlock { Text = wert, FontSize = 26, FontWeight = FontWeights.Bold, Foreground = wertFarbe, HorizontalAlignment = HorizontalAlignment.Center });
+            inhalt.Children.Add(new TextBlock { Text = label.ToUpperInvariant(), FontSize = 9.5, FontWeight = FontWeights.SemiBold, Foreground = TextGrau, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 2, 0, 0) });
 
-            var labelText = new TextBlock { Text = label.ToUpperInvariant(), FontSize = 10.5, FontWeight = FontWeights.SemiBold, Foreground = TextGrau, VerticalAlignment = VerticalAlignment.Center };
-            Grid.SetColumn(labelText, 0);
-
-            var wertStack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Right };
-            wertStack.Children.Add(new TextBlock { Text = wert, FontSize = 22, FontWeight = FontWeights.Bold, Foreground = wertFarbe, HorizontalAlignment = HorizontalAlignment.Right });
             if (unterzeile != null)
-                wertStack.Children.Add(new TextBlock { Text = unterzeile, FontSize = 9.5, Foreground = TextGrau, HorizontalAlignment = HorizontalAlignment.Right });
-            Grid.SetColumn(wertStack, 1);
+                inhalt.Children.Add(new TextBlock { Text = unterzeile, FontSize = 9.5, Foreground = TextGrau, HorizontalAlignment = HorizontalAlignment.Center });
 
-            zeile.Children.Add(labelText);
-            zeile.Children.Add(wertStack);
-
-            return new Border { BorderBrush = LinieHell, BorderThickness = new Thickness(0, istErsteKarte ? 0 : 1, 0, 0), Child = zeile };
+            return new Border
+            {
+                BorderBrush = LinieHell,
+                BorderThickness = new Thickness(istErsteKarte ? 0 : 1, 0, 0, 0),
+                Padding = new Thickness(12, 0, 12, 0),
+                Child = inhalt
+            };
         }
 
-        private static Border ErzeugeGruppenKarte(List<Leistung> alleLeistungen)
+        /// <summary>
+        /// "Fortschritt nach Leistungsart" als echte, seitenübergreifend umbrechende Tabelle (kann
+        /// bei vielen unterschiedlichen Leistungsarten mehrere Seiten füllen); die letzte Spalte
+        /// enthält je Zeile einen echten, proportional gefüllten Balken.
+        /// </summary>
+        private static IEnumerable<Block> ErzeugeGruppenTabelle(List<Leistung> alleLeistungen)
         {
-            var inhalt = new StackPanel();
-            inhalt.Children.Add(new TextBlock { Text = "FORTSCHRITT NACH LEISTUNGSART", FontSize = 10.5, FontWeight = FontWeights.SemiBold, Foreground = TextGrau, Margin = new Thickness(0, 0, 0, 10) });
+            yield return ErzeugeAbschnittsTitel("Fortschritt nach Leistungsart");
 
+            var tabelle = NeueTabelle(new[] { 2.6, 1.0, 1.0, 2.4 });
+            var kopfGruppe = new TableRowGroup();
+            kopfGruppe.Rows.Add(ErzeugeTabellenKopf("Leistungsart", "Erledigt", "Gesamt", "Fortschritt"));
+            tabelle.RowGroups.Add(kopfGruppe);
+
+            var datenGruppe = new TableRowGroup();
+            bool gerade = false;
             foreach (var gruppe in VisualBuilder.BerechneGruppen(alleLeistungen).OrderByDescending(g => g.Gesamt))
             {
                 double prozent = gruppe.Gesamt > 0 ? gruppe.Erledigt / gruppe.Gesamt * 100 : 0;
                 string einheit = gruppe.IstStueck ? "Stück" : "m";
-                inhalt.Children.Add(ErzeugeGruppenZeile(gruppe.Titel, $"{gruppe.Erledigt:F0} / {gruppe.Gesamt:F0} {einheit}", prozent));
-            }
 
-            return new Border { BorderBrush = LinieHell, BorderThickness = new Thickness(1), Padding = new Thickness(18, 14, 18, 14), Child = inhalt };
+                var zeile = new TableRow { Background = gerade ? ZeileWechsel : Brushes.Transparent };
+                zeile.Cells.Add(ErzeugeZelle(gruppe.Titel));
+                zeile.Cells.Add(ErzeugeZelle($"{gruppe.Erledigt:F0} {einheit}", TextAlignment.Right));
+                zeile.Cells.Add(ErzeugeZelle($"{gruppe.Gesamt:F0} {einheit}", TextAlignment.Right));
+                zeile.Cells.Add(ErzeugeBalkenZelle(prozent));
+                datenGruppe.Rows.Add(zeile);
+                gerade = !gerade;
+            }
+            tabelle.RowGroups.Add(datenGruppe);
+
+            yield return tabelle;
+            yield return new Paragraph { Margin = new Thickness(0, 0, 0, 22) };
         }
 
-        private static Grid ErzeugeGruppenZeile(string titel, string mengeText, double prozent)
+        private static TableCell ErzeugeBalkenZelle(double prozent)
         {
-            var zeile = new Grid { Margin = new Thickness(0, 0, 0, 10) };
-            zeile.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.2, GridUnitType.Star) });
-            zeile.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
-            zeile.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.3, GridUnitType.Star) });
-            zeile.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.1, GridUnitType.Star) });
+            double gefuellterAnteil = Math.Clamp(prozent, 0, 100);
 
-            var titelText = new TextBlock { Text = titel, FontSize = 10, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
-            Grid.SetColumn(titelText, 0);
+            // Füllung als Grid-Star-Anteil statt fester Pixelbreite: die Füllung ist so immer
+            // exakt "prozent" Prozent der tatsächlichen (erst beim Layout bekannten) Balkenbreite.
+            var balkenInnen = new Grid();
+            balkenInnen.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(Math.Max(gefuellterAnteil, 0.1), GridUnitType.Star) });
+            balkenInnen.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(Math.Max(100 - gefuellterAnteil, 0.1), GridUnitType.Star) });
 
-            var balkenSpur = new Border { Background = TrackHell, CornerRadius = new CornerRadius(4), Height = 10, Margin = new Thickness(10, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center };
-            var balkenFuellung = new Border
+            var balkenFuellung = new Border { Background = prozent >= 100 ? Erfolg : Akzent, CornerRadius = new CornerRadius(4) };
+            Grid.SetColumn(balkenFuellung, 0);
+            balkenInnen.Children.Add(balkenFuellung);
+
+            var balkenSpur = new Border { Background = TrackHell, CornerRadius = new CornerRadius(4), Height = 11, Child = balkenInnen };
+
+            var reihe = new Grid { VerticalAlignment = VerticalAlignment.Center };
+            reihe.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            reihe.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            Grid.SetColumn(balkenSpur, 0);
+            var prozentText = new TextBlock { Text = $"{prozent:F0} %", FontSize = 9.5, FontWeight = FontWeights.Bold, Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+            Grid.SetColumn(prozentText, 1);
+            reihe.Children.Add(balkenSpur);
+            reihe.Children.Add(prozentText);
+
+            return new TableCell(new BlockUIContainer(reihe))
             {
-                Background = prozent >= 100 ? Erfolg : Akzent,
-                CornerRadius = new CornerRadius(4),
-                Height = 10,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Width = Math.Max(4, Math.Clamp(prozent, 0, 100)),
-                Margin = new Thickness(10, 0, 0, 0)
+                Padding = new Thickness(6, 7, 6, 7),
+                BorderBrush = LinieHell,
+                BorderThickness = new Thickness(0, 0, 0, 1)
             };
-            var balkenGrid = new Grid();
-            balkenGrid.Children.Add(balkenSpur);
-            balkenGrid.Children.Add(balkenFuellung);
-            Grid.SetColumn(balkenGrid, 1);
-
-            var mengeTextBlock = new TextBlock { Text = mengeText, FontSize = 9.5, Foreground = TextGrau, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right };
-            Grid.SetColumn(mengeTextBlock, 2);
-
-            var prozentText = new TextBlock { Text = $"{prozent:F0} %", FontSize = 10, FontWeight = FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right };
-            Grid.SetColumn(prozentText, 3);
-
-            zeile.Children.Add(titelText);
-            zeile.Children.Add(balkenGrid);
-            zeile.Children.Add(mengeTextBlock);
-            zeile.Children.Add(prozentText);
-            return zeile;
         }
 
         private static IEnumerable<Block> ErzeugeLaengenAbschnitt(Laenge laenge)
