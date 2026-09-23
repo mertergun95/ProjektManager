@@ -17,7 +17,7 @@ namespace ProjektManager.Views
 {
     public partial class NotizEingabeWindow : Window
     {
-        public string EingetrageneNotiz { get; private set; }
+        public string EingetrageneNotiz { get; private set; } = string.Empty;
 
         public NotizEingabeWindow(string vorhandeneNotiz = "")
         {

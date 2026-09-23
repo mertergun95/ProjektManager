@@ -1,68 +1,38 @@
-﻿<UserControl x:Class="ProjektManager.Views.ProjektVisualisierungPage"
+<UserControl x:Class="ProjektManager.Views.ProjektVisualisierungPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="{StaticResource BackgroundBrush}">
 
-    <Grid Background="#F0F0F0">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <!-- 🔺 Scroll içerik -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="20" Background="Transparent">
+        <TextBlock Grid.Row="0" Name="ProjektTitel" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,16"/>
 
-                <!-- Başlık -->
-                <TextBlock Name="ProjektTitel"
-                           FontSize="24"
-                           FontWeight="Bold"
-                           Foreground="#333"
-                           Margin="0 0 0 20"/>
+        <!-- Km- und Längen-Leiste -->
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="0" Margin="0,0,0,16">
+            <ScrollViewer x:Name="ScrollArea"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Vertical" Margin="8">
+                    <Canvas x:Name="KmBar" Height="70"/>
+                    <StackPanel x:Name="LaengeBar" Orientation="Horizontal" Height="70"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
 
-                <!-- Scrollable Bereich: KM ve Länge barları -->
-                <ScrollViewer x:Name="ScrollArea"
-                              HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Disabled">
-                    <StackPanel Orientation="Vertical">
-                        <Canvas x:Name="KmBar" Height="80" Background="#F0F0F0"/>
-                        <StackPanel x:Name="LaengeBar"
-                                    Orientation="Horizontal"
-                                    Height="80"
-                                    Background="#D0D0D0"/>
-                    </StackPanel>
-                </ScrollViewer>
-
-                <!-- Özet Paneli -->
-                <Border Background="#E0E0E0"
-                        CornerRadius="12"
-                        Padding="20"
-                        Margin="0,30,0,20"
-                        HorizontalAlignment="Center"
-                        Width="560">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="12"
-                                          ShadowDepth="3"
-                                          Direction="270"
-                                          Opacity="0.2"
-                                          Color="#444"/>
-                    </Border.Effect>
-
-                    <StackPanel x:Name="ProjektZusammenfassungPanel" />
-                </Border>
-            </StackPanel>
+        <!-- Zusammenfassung -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Border Style="{StaticResource CardStyle}" HorizontalAlignment="Center" Width="560" Margin="0,0,0,16">
+                <StackPanel x:Name="ProjektZusammenfassungPanel"/>
+            </Border>
         </ScrollViewer>
-
-        <!-- 🔻 Sabit Sağ Alt Logo -->
-        <Image Source="/Resources/FirmaLogo.png"
-               Opacity="0.1"
-               Width="500"
-               Height="500"
-               Stretch="Uniform"
-               HorizontalAlignment="Right"
-               VerticalAlignment="Bottom"
-               Margin="20"
-               IsHitTestVisible="False"
-               Panel.ZIndex="1"/>
     </Grid>
 </UserControl>

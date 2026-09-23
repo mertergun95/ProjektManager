@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using ExcelDataReader;
-using ProjektManager.Models;
 
 namespace ProjektManager.Helpers
 {
@@ -13,96 +11,60 @@ namespace ProjektManager.Helpers
         {
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-            using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read))
-            using (var reader = ExcelReaderFactory.CreateReader(stream))
+            using var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
+            using var reader = ExcelReaderFactory.CreateReader(stream);
+
+            var config = new ExcelDataSetConfiguration
             {
-                var config = new ExcelDataSetConfiguration
+                ConfigureDataTable = _ => new ExcelDataTableConfiguration
                 {
-                    ConfigureDataTable = _ => new ExcelDataTableConfiguration
-                    {
-                        UseHeaderRow = false
-                    }
-                };
-
-                var dataSet = reader.AsDataSet(config);
-                var table = dataSet.Tables[0];
-
-                for (int i = 0; i < skipRows; i++)
-                {
-                    if (table.Rows.Count > 0)
-                        table.Rows.RemoveAt(0);
+                    UseHeaderRow = false
                 }
+            };
 
-                return table;
-            }
-        }
+            var dataSet = reader.AsDataSet(config);
+            var table = dataSet.Tables[0];
 
-        public static List<LSTKabel> LeseLSTKabel(string excelPfad)
-        {
-            var liste = new List<LSTKabel>();
-            var dt = LeseExcel(excelPfad);
-
-            foreach (DataRow row in dt.Rows)
+            for (int i = 0; i < skipRows; i++)
             {
-                try
-                {
-                    var kabelNr = row[1]?.ToString().Trim();
-                    if (string.IsNullOrWhiteSpace(kabelNr)) continue;
-
-                    var kabel = new LSTKabel
-                    {
-                        Kabeltyp = row[0]?.ToString().Trim(),
-                        KabelNr = kabelNr,
-                        Kabelquerschnitt = row[2]?.ToString().Trim(),
-                        VonPunkt = row[4]?.ToString().Trim(),
-                        KmVon = TryParseDouble(row[5]),    // doğrudan metre
-                        KmBis = TryParseDouble(row[7]),
-                        KmVonRaw = row[5]?.ToString().Trim(),
-                        KmBisRaw = row[7]?.ToString().Trim(),
-
-
-                        BisPunkt = row[6]?.ToString().Trim(),
-                        
-                        LängeSoll = (int)TryParseDouble(row[8]),
-                        Trommelnummer = row[11]?.ToString().Trim(),
-                        Bestelllaenge = int.TryParse(row[9]?.ToString(), out var best) ? best : null,
-                        VerlegeDatum = DateTime.TryParse(row[10]?.ToString(), out var date) ? date : (DateTime?)null,
-                        Bemerkung = row[15]?.ToString()?.Trim()
-                    };
-
-                    liste.Add(kabel);
-                }
-                catch
-                {
-                    // Hatalı satır atlanır
-                    continue;
-                }
+                if (table.Rows.Count > 0)
+                    table.Rows.RemoveAt(0);
             }
 
-            return liste;
+            return table;
         }
 
-        private static double TryParseDouble(object value)
+        /// <summary>
+        /// Parst eine Excel-Zelle als Zahl, unabhängig von der System-Kultur.
+        /// Erkennt deutsches ("1.234,56"), einfaches deutsches ("12,345") und
+        /// invariantes ("12.345") Zahlenformat anhand der vorhandenen Trennzeichen.
+        /// </summary>
+        public static double ParseDouble(object? value)
         {
             if (value == null) return 0;
 
-            string s = value.ToString().Trim();
+            string s = value.ToString()?.Trim() ?? string.Empty;
+            if (s.Length == 0) return 0;
 
-            // "1,688" gibi ise → "1688" yap
-            if (s.Contains(",") && s.Count(c => c == ',') == 1 && !s.Contains("."))
+            s = s.Replace("km", "", StringComparison.OrdinalIgnoreCase).Trim();
+
+            bool hatKomma = s.Contains(',');
+            bool hatPunkt = s.Contains('.');
+
+            if (hatKomma && hatPunkt)
             {
-                s = s.Replace(",", ""); // 1,688 → 1688
+                // Das zuletzt stehende Zeichen ist das Dezimaltrennzeichen.
+                s = s.LastIndexOf(',') > s.LastIndexOf('.')
+                    ? s.Replace(".", "").Replace(",", ".")
+                    : s.Replace(",", "");
+            }
+            else if (hatKomma)
+            {
+                s = s.Replace(",", ".");
             }
 
-            // Almanca'da 1.688,00 olabilir → hepsini temizle
-            s = s.Replace(".", "").Replace(",", "").Replace("km", "").Trim();
-
-            double.TryParse(s, System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out double result);
-
+            double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out double result);
             return result;
         }
-
-
     }
 }

@@ -5,32 +5,39 @@
         WindowState="Maximized"
         WindowStyle="SingleBorderWindow"
         ResizeMode="CanResize"
-        Background="#F0F0F0">
+        Background="{StaticResource BackgroundBrush}">
 
-    <DockPanel Margin="10" Background="#F0F0F0">
-        <!-- Üst Menü -->
-        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0 0 0 10">
-            <Button Name="BackButton" Content="← Zurück" Width="100" Click="BackButton_Click" Visibility="Collapsed"
-                    Background="#D0D0D0" Foreground="#333333" FontWeight="Bold" />
-            <Button Content="Neues Projekt" Width="120" Margin="5"
-                    Background="#D0D0D0" Foreground="#333333" FontWeight="Bold" Click="NeuesProjekt_Click"/>
-            <Button x:Name="ProjektBearbeitenButton" Content="Projekt bearbeiten" Width="120" Margin="5"
-        Background="#D0D0D0" Foreground="#333333" FontWeight="Bold" Click="ProjektBearbeiten_Click" IsEnabled="False"/>
+    <DockPanel>
+        <!-- Kopfleiste -->
+        <Border DockPanel.Dock="Top"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="20,14">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Name="BackButton" Content="← Zurück"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Click="BackButton_Click" Visibility="Collapsed"
+                            Margin="0,0,16,0"/>
+                    <TextBlock Text="Projektmanager" Style="{StaticResource PageTitleStyle}" FontSize="18" VerticalAlignment="Center"/>
+                </StackPanel>
 
-            <Button x:Name="ProjektLoeschenButton" Content="Projekt löschen" Width="120" Margin="5"
-        Background="#D0D0D0" Foreground="#333333" FontWeight="Bold" Click="ProjektLoeschen_Click" IsEnabled="False"/>
-            <Button Content="LST Importieren"
-        Width="140"
-        Margin="5"
-        Background="#D0D0D0"
-        Foreground="#333333"
-        FontWeight="Bold"
-        Click="LSTImportieren_Click"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="ProjektLoeschenButton" Content="Projekt löschen"
+                            Style="{StaticResource DangerButtonStyle}"
+                            Margin="8,0,0,0" IsEnabled="False" Click="ProjektLoeschen_Click"/>
+                    <Button x:Name="ProjektBearbeitenButton" Content="Projekt bearbeiten"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Margin="8,0,0,0" IsEnabled="False" Click="ProjektBearbeiten_Click"/>
+                    <Button Content="Neues Projekt"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Margin="8,0,0,0" Click="NeuesProjekt_Click"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
 
-
-        </StackPanel>
-
-        <!-- İçerik Alanı -->
-        <ContentControl Name="MainContent" Background="#E0E0E0"/>
+        <!-- Inhalt -->
+        <ContentControl Name="MainContent" Background="{StaticResource BackgroundBrush}"/>
     </DockPanel>
 </Window>
