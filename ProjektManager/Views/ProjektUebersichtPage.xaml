@@ -6,6 +6,10 @@
              mc:Ignorable="d"
              Background="{StaticResource BackgroundBrush}">
 
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolZuVisibility"/>
+    </UserControl.Resources>
+
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -26,45 +30,63 @@
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="Suche:" Style="{StaticResource MutedTextStyle}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <TextBox x:Name="SucheBox"
-                         Width="240"
+                <TextBox Width="240"
                          Style="{StaticResource InputTextBoxStyle}"
                          VerticalAlignment="Center"
-                         TextChanged="SucheBox_TextChanged"/>
+                         Text="{Binding Suchtext, UpdateSourceTrigger=PropertyChanged}"/>
             </StackPanel>
         </Grid>
 
         <!-- Gesamtübersicht über alle Projekte -->
-        <Border x:Name="GesamtuebersichtCard" Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,0,0,16"
+                Visibility="{Binding HatGesamtuebersicht, Converter={StaticResource BoolZuVisibility}}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel x:Name="GesamtDonutPanel" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center"/>
+                <ContentControl Grid.Column="0" Content="{Binding GesamtDonuts}" VerticalAlignment="Center"/>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="24,0,0,0">
                     <TextBlock Text="Gesamtübersicht" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,8"/>
-                    <TextBlock x:Name="GesamtStatistikText" Style="{StaticResource MutedTextStyle}" FontSize="13" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding GesamtStatistikText}" Style="{StaticResource MutedTextStyle}" FontSize="13" TextWrapping="Wrap"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <ScrollViewer Grid.Row="2">
             <Grid>
-                <WrapPanel x:Name="ProjektCardPanel"
-                           Orientation="Horizontal"
-                           HorizontalAlignment="Left"
-                           VerticalAlignment="Top"/>
+                <ItemsControl ItemsSource="{Binding Karten}" HorizontalAlignment="Left">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource CardStyle}"
+                                    Margin="0,0,16,16"
+                                    Width="260"
+                                    Cursor="Hand"
+                                    ToolTip="Doppelklick zum Öffnen"
+                                    MouseLeftButtonDown="Karte_MouseLeftButtonDown">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,4" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{Binding LaengenInfo}" Style="{StaticResource MutedTextStyle}" Margin="0,0,0,12" HorizontalAlignment="Center"/>
+                                    <ContentControl Content="{Binding DonutVisual}" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                <TextBlock x:Name="LeerHinweisText"
-                           Text="Noch keine Projekte vorhanden. Über „Neues Projekt“ oben rechts starten."
+                <TextBlock Text="Noch keine Projekte vorhanden. Über „Neues Projekt“ oben rechts starten."
                            Style="{StaticResource MutedTextStyle}"
                            FontSize="14"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"
-                           Visibility="Collapsed"/>
+                           Visibility="{Binding ZeigeLeerHinweis, Converter={StaticResource BoolZuVisibility}}"/>
             </Grid>
         </ScrollViewer>
     </Grid>

@@ -20,22 +20,60 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="0" Name="ProjektTitel" Style="{StaticResource PageTitleStyle}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="0" Text="{Binding Titel}" Style="{StaticResource PageTitleStyle}" VerticalAlignment="Center"/>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="Als Excel exportieren" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" Click="ExcelExport_Click"/>
-                <Button Content="Bericht drucken" Style="{StaticResource SecondaryButtonStyle}" Click="BerichtDrucken_Click"/>
+                <Button Content="Als Excel exportieren" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" Command="{Binding ExcelExportCommand}"/>
+                <Button Content="Bericht drucken" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding BerichtDruckenCommand}"/>
             </StackPanel>
         </Grid>
 
         <!-- Km- und Längen-Leiste -->
         <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="0" Margin="0,0,0,16">
-            <ScrollViewer x:Name="ScrollArea"
-                          HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Disabled">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                 <StackPanel Orientation="Vertical" Margin="8">
-                    <Canvas x:Name="KmBar" Height="70"/>
-                    <StackPanel x:Name="LaengeBar" Orientation="Horizontal" Height="70"/>
+                    <ItemsControl ItemsSource="{Binding KmMarker}" Height="70" Width="{Binding GesamtBreite}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <ContentControl Content="{Binding Visual}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <ItemsControl ItemsSource="{Binding Laengen}" Height="70" Margin="20,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="180" Height="60" CornerRadius="8"
+                                        Background="{Binding Hintergrund}"
+                                        Margin="2" Cursor="Hand"
+                                        ToolTip="Doppelklick zum Öffnen"
+                                        MouseLeftButtonDown="LaengenBlock_MouseLeftButtonDown">
+                                    <TextBlock Text="{Binding Bezeichnung}"
+                                               Foreground="White"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </ScrollViewer>
         </Border>
@@ -43,7 +81,7 @@
         <!-- Zusammenfassung -->
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Border Style="{StaticResource CardStyle}" HorizontalAlignment="Center" Width="560" Margin="0,0,0,16">
-                <StackPanel x:Name="ProjektZusammenfassungPanel"/>
+                <ContentControl Content="{Binding ZusammenfassungInhalt}"/>
             </Border>
         </ScrollViewer>
     </Grid>

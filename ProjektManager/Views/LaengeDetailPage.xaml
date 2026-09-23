@@ -6,6 +6,10 @@
              mc:Ignorable="d"
              Background="{StaticResource BackgroundBrush}">
 
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolZuVisibility"/>
+    </UserControl.Resources>
+
     <Grid x:Name="LayoutRoot" Margin="24">
 
         <Grid.RowDefinitions>
@@ -19,23 +23,94 @@
 
         <!-- Filter -->
         <StackPanel Orientation="Horizontal" Margin="0,0,0,12" Grid.Row="0">
-            <CheckBox x:Name="CheckBoxNurErledigt" Content="Nur erledigte anzeigen"
-                      Margin="0,0,20,0"
-                      Checked="FilterCheckBox_Changed"
-                      Unchecked="FilterCheckBox_Changed"/>
-            <CheckBox x:Name="CheckBoxNurAbgerechnet" Content="Nur abgerechnete anzeigen"
-                      Margin="0,0,20,0"
-                      Checked="FilterCheckBox_Changed"
-                      Unchecked="FilterCheckBox_Changed"/>
+            <CheckBox Content="Nur erledigte anzeigen" Margin="0,0,20,0" IsChecked="{Binding NurErledigt}"/>
+            <CheckBox Content="Nur abgerechnete anzeigen" Margin="0,0,20,0" IsChecked="{Binding NurAbgerechnet}"/>
         </StackPanel>
 
         <!-- km-Leiste + Leistungsblöcke -->
         <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="8" Margin="0,0,0,16">
             <ScrollViewer VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Auto">
                 <StackPanel Orientation="Vertical">
-                    <TextBlock Name="LaengeTitel" Style="{StaticResource PageTitleStyle}" FontSize="20" Margin="8,4,8,16"/>
-                    <Canvas Name="KmBar" Height="70"/>
-                    <StackPanel Name="LeistungsBar" Orientation="Horizontal" Height="70"/>
+                    <TextBlock Text="{Binding Titel}" Style="{StaticResource PageTitleStyle}" FontSize="20" Margin="8,4,8,16"/>
+
+                    <ItemsControl ItemsSource="{Binding KmMarker}" Height="70" Width="{Binding GesamtBreite}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <ContentControl Content="{Binding Visual}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <ItemsControl ItemsSource="{Binding Bloecke}" Height="70">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="{Binding Breite}"
+                                        Height="60"
+                                        CornerRadius="8"
+                                        Background="{Binding Hintergrund}"
+                                        BorderBrush="{Binding RandFarbe}"
+                                        BorderThickness="{Binding RandDicke}"
+                                        Margin="3"
+                                        Cursor="Hand"
+                                        ToolTip="{Binding ToolTipText}"
+                                        MouseLeftButtonDown="LeistungsBlock_MouseLeftButtonDown">
+                                    <Border.ContextMenu>
+                                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                            <MenuItem Header="Bearbeiten" Command="{Binding BearbeitenCommand}"/>
+                                            <MenuItem Header="Notiz hinzufügen / bearbeiten" Command="{Binding NotizCommand}"/>
+                                            <MenuItem Header="Als erledigt umschalten" Command="{Binding ErledigtUmschaltenCommand}"/>
+                                            <MenuItem Header="{Binding AbrechnenHeader}" Command="{Binding AbrechnenCommand}"/>
+                                            <MenuItem Header="Abrechnung zurücksetzen" Command="{Binding AbrechnungZuruecksetzenCommand}"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <Grid>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Beschreibung}"
+                                                       Foreground="White"
+                                                       FontWeight="SemiBold"
+                                                       TextWrapping="NoWrap"
+                                                       TextAlignment="Center"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="{Binding MeterText}"
+                                                       FontSize="10"
+                                                       Foreground="#C8FFFFFF"
+                                                       HorizontalAlignment="Center"
+                                                       Margin="0,4,0,0"
+                                                       Visibility="{Binding ZeigtMeterText, Converter={StaticResource BoolZuVisibility}}"/>
+                                        </StackPanel>
+
+                                        <Border MinWidth="20" Height="20" CornerRadius="10"
+                                                Background="{StaticResource DangerBrush}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                Margin="0,0,4,4" Padding="5,0"
+                                                Visibility="{Binding ZeigtAbgerechnetBadge, Converter={StaticResource BoolZuVisibility}}">
+                                            <TextBlock Text="{Binding AbgerechnetBadgeText}" Foreground="White" FontWeight="Bold" FontSize="11"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+
+                                        <TextBlock Text="!" Foreground="White" FontWeight="Bold" FontSize="16"
+                                                   HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8,0,0,2"
+                                                   Visibility="{Binding ZeigtNotizBadge, Converter={StaticResource BoolZuVisibility}}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </ScrollViewer>
         </Border>
@@ -43,9 +118,17 @@
         <!-- Zusammenfassung -->
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Border Style="{StaticResource CardStyle}" HorizontalAlignment="Center" Width="560">
-                <StackPanel x:Name="ZusammenfassungPanel"/>
+                <ContentControl Content="{Binding ZusammenfassungInhalt}"/>
             </Border>
         </ScrollViewer>
+
+        <!-- Navigation -->
+        <Button Content="←" Style="{StaticResource IconButtonStyle}" Grid.Row="1"
+                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,6,0,0"
+                Command="{Binding VorherigeCommand}"/>
+        <Button Content="→" Style="{StaticResource IconButtonStyle}" Grid.Row="1"
+                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,0,0"
+                Command="{Binding NaechsteCommand}"/>
 
     </Grid>
 </UserControl>
