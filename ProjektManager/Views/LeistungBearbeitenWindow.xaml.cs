@@ -1,4 +1,5 @@
 using ProjektManager.Models;
+using ProjektManager.Views.Shared;
 using System.Globalization;
 using System.Windows;
 
@@ -8,7 +9,7 @@ namespace ProjektManager.Views
     {
         private readonly Leistung _leistung;
 
-        public LeistungBearbeitenWindow(Leistung leistung)
+        public LeistungBearbeitenWindow(Leistung leistung, IEnumerable<string>? beschreibungsVorschlaege = null, IEnumerable<string>? bahnseiteVorschlaege = null)
         {
             InitializeComponent();
             _leistung = leistung;
@@ -19,6 +20,9 @@ namespace ProjektManager.Views
             KmBisBox.Text = leistung.KmBis.ToString("F3", CultureInfo.InvariantCulture);
             AnmerkungBox.Text = leistung.Anmerkung;
             Anmerkung2Box.Text = leistung.Anmerkung2;
+
+            AutoComplete.Aktivieren(BeschreibungBox, beschreibungsVorschlaege ?? Enumerable.Empty<string>());
+            AutoComplete.Aktivieren(BahnseiteBox, bahnseiteVorschlaege ?? Enumerable.Empty<string>());
         }
 
         private void Speichern_Click(object sender, RoutedEventArgs e)
