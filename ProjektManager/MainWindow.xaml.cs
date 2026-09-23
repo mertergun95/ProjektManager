@@ -5,6 +5,7 @@ using ProjektManager.Views;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace ProjektManager
 {
@@ -12,6 +13,7 @@ namespace ProjektManager
     {
         private readonly MainViewModel _viewModel;
         private readonly Stack<UserControl> _pageHistory = new();
+        private readonly DispatcherTimer _statusTimer;
 
         public MainViewModel ViewModel => _viewModel;
         public Projekt? AktuellesProjekt { get; set; }
@@ -23,6 +25,13 @@ namespace ProjektManager
 
             _viewModel = new MainViewModel();
             DataContext = _viewModel;
+
+            _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2.5) };
+            _statusTimer.Tick += (s, e) =>
+            {
+                _statusTimer.Stop();
+                StatusBorder.Visibility = Visibility.Collapsed;
+            };
 
             ZeigeUebersicht();
         }
@@ -48,6 +57,21 @@ namespace ProjektManager
             BackButton.Visibility = Visibility.Collapsed;
         }
 
+        /// <summary>Speichert alle Projekte und zeigt kurz eine Bestätigung in der Statusleiste an.</summary>
+        public void SpeichernUndBestaetigen()
+        {
+            ProjektSpeicher.Speichern(AlleProjekte);
+            ZeigeStatus("Gespeichert");
+        }
+
+        public void ZeigeStatus(string text)
+        {
+            StatusText.Text = text;
+            StatusBorder.Visibility = Visibility.Visible;
+            _statusTimer.Stop();
+            _statusTimer.Start();
+        }
+
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             if (_pageHistory.Count > 0)
@@ -58,7 +82,7 @@ namespace ProjektManager
 
         private void NeuesProjekt_Click(object sender, RoutedEventArgs e)
         {
-            var nameWindow = new ProjektNameEingabeWindow();
+            var nameWindow = new ProjektNameEingabeWindow { Owner = this };
             if (nameWindow.ShowDialog() != true) return;
 
             var importWindow = new ProjektImportWindow();
@@ -68,17 +92,17 @@ namespace ProjektManager
                 neuesProjekt.Name = nameWindow.ProjektName;
                 _viewModel.Projekte.Add(neuesProjekt);
 
-                ProjektSpeicher.Speichern(_viewModel.Projekte.ToList());
+                SpeichernUndBestaetigen();
                 ZeigeUebersicht();
             }
         }
 
         private void ProjektBearbeiten_Click(object sender, RoutedEventArgs e)
         {
-            if (MainContent.Content is not ProjektUebersichtPage uebersichtPage || uebersichtPage.AusgewaehltesProjekt is not Projekt ausgewaehlt)
-                return;
+            var ausgewaehlt = WaehleProjekt("Welches Projekt möchten Sie bearbeiten?");
+            if (ausgewaehlt == null) return;
 
-            var nameWindow = new ProjektNameEingabeWindow(ausgewaehlt.Name);
+            var nameWindow = new ProjektNameEingabeWindow(ausgewaehlt.Name) { Owner = this };
             if (nameWindow.ShowDialog() != true) return;
 
             var importWindow = new ProjektImportWindow(ausgewaehlt);
@@ -88,15 +112,15 @@ namespace ProjektManager
                 ausgewaehlt.Laengen = importWindow.ErgebnisProjekt.Laengen;
                 ausgewaehlt.ProjektPfad = importWindow.ErgebnisProjekt.ProjektPfad;
 
-                ProjektSpeicher.Speichern(AlleProjekte);
+                SpeichernUndBestaetigen();
                 ZeigeUebersicht();
             }
         }
 
         private void ProjektLoeschen_Click(object sender, RoutedEventArgs e)
         {
-            if (MainContent.Content is not ProjektUebersichtPage uebersichtPage || uebersichtPage.AusgewaehltesProjekt is not Projekt ausgewaehlt)
-                return;
+            var ausgewaehlt = WaehleProjekt("Welches Projekt möchten Sie löschen?");
+            if (ausgewaehlt == null) return;
 
             var result = MessageBox.Show(
                 $"Möchten Sie das Projekt '{ausgewaehlt.Name}' wirklich löschen?",
@@ -105,17 +129,20 @@ namespace ProjektManager
             if (result != MessageBoxResult.Yes) return;
 
             _viewModel.Projekte.Remove(ausgewaehlt);
-            ProjektSpeicher.Speichern(AlleProjekte);
+            SpeichernUndBestaetigen();
             ZeigeUebersicht();
         }
 
-        public void UpdateProjektBearbeitenUndLoeschenButtons()
+        private Projekt? WaehleProjekt(string ueberschrift)
         {
-            if (MainContent.Content is not ProjektUebersichtPage uebersichtPage) return;
+            if (AlleProjekte.Count == 0)
+            {
+                MessageBox.Show("Es sind noch keine Projekte vorhanden.", "Hinweis", MessageBoxButton.OK, MessageBoxImage.Information);
+                return null;
+            }
 
-            bool hatAuswahl = uebersichtPage.AusgewaehltesProjekt != null;
-            ProjektBearbeitenButton.IsEnabled = hatAuswahl;
-            ProjektLoeschenButton.IsEnabled = hatAuswahl;
+            var auswahlFenster = new ProjektAuswahlWindow(AlleProjekte, ueberschrift) { Owner = this };
+            return auswahlFenster.ShowDialog() == true ? auswahlFenster.AusgewaehltesProjekt : null;
         }
     }
 }

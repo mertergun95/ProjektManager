@@ -9,12 +9,49 @@
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <!-- Titel + Suche -->
+            <RowDefinition Height="Auto"/>
+            <!-- Gesamtübersicht -->
             <RowDefinition Height="*"/>
+            <!-- Projektkarten -->
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Projekte" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,16"/>
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-        <ScrollViewer Grid.Row="1">
+            <TextBlock Grid.Column="0" Text="Projekte" Style="{StaticResource PageTitleStyle}" VerticalAlignment="Center"/>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Suche:" Style="{StaticResource MutedTextStyle}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBox x:Name="SucheBox"
+                         Width="240"
+                         Style="{StaticResource InputTextBoxStyle}"
+                         VerticalAlignment="Center"
+                         TextChanged="SucheBox_TextChanged"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Gesamtübersicht über alle Projekte -->
+        <Border x:Name="GesamtuebersichtCard" Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel x:Name="GesamtDonutPanel" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="24,0,0,0">
+                    <TextBlock Text="Gesamtübersicht" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,8"/>
+                    <TextBlock x:Name="GesamtStatistikText" Style="{StaticResource MutedTextStyle}" FontSize="13" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="2">
             <Grid>
                 <WrapPanel x:Name="ProjektCardPanel"
                            Orientation="Horizontal"

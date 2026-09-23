@@ -94,26 +94,7 @@ namespace ProjektManager.Views
             ProjektZusammenfassungPanel.Children.Clear();
 
             var alleLeistungen = _projekt.Laengen.SelectMany(l => l.Leistungen).ToList();
-            ProjektZusammenfassungPanel.Children.Add(VisualBuilder.ErzeugeZusammenfassung(alleLeistungen, BestimmeGruppe));
-        }
-
-        private static string BestimmeGruppe(string beschreibung)
-        {
-            string b = beschreibung.ToLower();
-
-            if (b.Contains("vorh. kk") || b.Contains("vorh. bkk"))
-                return "vorh. BKK";
-
-            if (b.Contains("vorh. querung") || b.Contains("vorh. gq") || b.Contains("vorh. gleisquerung"))
-                return "vorh. GQ";
-
-            if (b.Contains("vorh. sq") || b.Contains("vorh. straßenquerung") || b.Contains("vorh. rohranlage"))
-                return "vorh. Rohranlage";
-
-            if (b.Contains("vam"))
-                return "VAM";
-
-            return beschreibung;
+            ProjektZusammenfassungPanel.Children.Add(VisualBuilder.ErzeugeZusammenfassung(alleLeistungen));
         }
     }
 }

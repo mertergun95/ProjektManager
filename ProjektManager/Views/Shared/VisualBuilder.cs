@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -179,11 +180,27 @@ namespace ProjektManager.Views.Shared
             return container;
         }
 
+        private static readonly Regex LaufendeNummer = new(@"-\d+", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Normalisiert eine Leistungsbeschreibung zu einem Gruppierungsschlüssel: fortlaufende
+        /// Instanz-Nummern, die direkt mit Bindestrich an ein Wort angehängt sind (z.B. "Querung-6",
+        /// "Neubaustraßenquerung-1"), werden entfernt, damit gleichartige, nur durchnummerierte
+        /// Vorgänge (Querung-6, Querung-7, Querung-8 …) zu einer Gruppe zusammengefasst werden.
+        /// Andere Zahlen (z.B. "Gr. 1", "GFK Gr. 2" mit Leerzeichen statt Bindestrich) bleiben
+        /// unangetastet, da sie in der Praxis unterschiedliche Kanalgrößen/Aufgaben kennzeichnen
+        /// und die Leistungen dadurch bewusst getrennt gehalten werden sollen.
+        /// </summary>
+        public static string NormalisiereGruppenSchluessel(string beschreibung)
+        {
+            return LaufendeNummer.Replace(beschreibung, "").Trim();
+        }
+
         /// <summary>
         /// Baut die komplette Fortschritts-Zusammenfassung (Erledigt-/Abgerechnet-Donuts + je Gruppe
         /// eine Fortschrittszeile) für eine Menge von Leistungen. <paramref name="gruppierung"/> erlaubt
-        /// es, mehrere Leistungsbeschreibungen zu einer Sammelgruppe zusammenzufassen (z.B. auf Projektebene);
-        /// ohne Angabe wird exakt nach Leistungsbeschreibung gruppiert.
+        /// es, den Gruppierungsschlüssel individuell zu bestimmen; ohne Angabe wird
+        /// <see cref="NormalisiereGruppenSchluessel"/> verwendet.
         /// </summary>
         public static StackPanel ErzeugeZusammenfassung(IReadOnlyCollection<Leistung> leistungen, Func<string, string>? gruppierung = null)
         {
@@ -206,8 +223,10 @@ namespace ProjektManager.Views.Shared
             donutZeile.Children.Add(ErzeugeDonut(abgerechnetProzent, "Abgerechnet", Accent));
             wurzel.Children.Add(donutZeile);
 
+            var gruppierungsFunktion = gruppierung ?? NormalisiereGruppenSchluessel;
+
             var gruppen = leistungen
-                .GroupBy(l => gruppierung?.Invoke(l.Leistungsbeschreibung) ?? l.Leistungsbeschreibung)
+                .GroupBy(l => gruppierungsFunktion(l.Leistungsbeschreibung))
                 .Select(g =>
                 {
                     bool istStueck = g.All(l => (l.LaengeMeter ?? 0) == 0);

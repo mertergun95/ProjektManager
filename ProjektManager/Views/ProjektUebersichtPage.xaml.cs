@@ -13,23 +13,60 @@ namespace ProjektManager.Views
         private readonly MainWindow _main;
         private readonly List<Projekt> _projekte;
 
-        public Projekt? AusgewaehltesProjekt { get; private set; }
-
         public ProjektUebersichtPage(MainWindow main, List<Projekt> projekte)
         {
             InitializeComponent();
             _main = main;
             _projekte = projekte;
 
-            ErzeugeProjektKarten();
+            ErzeugeGesamtuebersicht();
+            ErzeugeProjektKarten(_projekte);
         }
 
-        private void ErzeugeProjektKarten()
+        private void SucheBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            string suchtext = SucheBox.Text.Trim();
+
+            var gefiltert = string.IsNullOrEmpty(suchtext)
+                ? _projekte
+                : _projekte.Where(p => p.Name.Contains(suchtext, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            ErzeugeProjektKarten(gefiltert);
+        }
+
+        private void ErzeugeGesamtuebersicht()
+        {
+            GesamtDonutPanel.Children.Clear();
+
+            if (_projekte.Count == 0)
+            {
+                GesamtuebersichtCard.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            var alleLeistungen = _projekte.SelectMany(p => p.Laengen).SelectMany(l => l.Leistungen).ToList();
+            double gesamtMeter = alleLeistungen.Sum(l => l.LaengeMeter ?? 0);
+            double erledigtMeter = alleLeistungen.Where(l => l.IstFertiggestellt).Sum(l => l.LaengeMeter ?? 0);
+            double abgerechnetMeter = alleLeistungen.Where(l => l.IstAbgerechnet).Sum(l => l.LaengeMeter ?? 0);
+
+            double erledigtProzent = gesamtMeter > 0 ? erledigtMeter / gesamtMeter * 100 : 0;
+            double abgerechnetProzent = gesamtMeter > 0 ? abgerechnetMeter / gesamtMeter * 100 : 0;
+
+            GesamtDonutPanel.Children.Add(VisualBuilder.ErzeugeDonut(erledigtProzent, "Erledigt", VisualBuilder.Success));
+            GesamtDonutPanel.Children.Add(VisualBuilder.ErzeugeDonut(abgerechnetProzent, "Abgerechnet", VisualBuilder.Accent));
+
+            int laengenAnzahl = _projekte.Sum(p => p.Laengen.Count);
+            GesamtStatistikText.Text =
+                $"{_projekte.Count} Projekt(e) · {laengenAnzahl} Länge(n) · {gesamtMeter:N0} m gesamt\n" +
+                $"{erledigtMeter:N0} m erledigt · {abgerechnetMeter:N0} m abgerechnet";
+        }
+
+        private void ErzeugeProjektKarten(List<Projekt> projekte)
         {
             ProjektCardPanel.Children.Clear();
             LeerHinweisText.Visibility = _projekte.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-            foreach (var projekt in _projekte)
+            foreach (var projekt in projekte)
             {
                 ProjektCardPanel.Children.Add(ErzeugeProjektCard(projekt));
             }
@@ -74,32 +111,21 @@ namespace ProjektManager.Views
             inhalt.Children.Add(laengeInfo);
             inhalt.Children.Add(donuts);
 
-            bool istAusgewaehlt = projekt == AusgewaehltesProjekt;
-
             var karte = new Border
             {
                 Style = (Style)Application.Current.Resources["CardStyle"],
-                BorderBrush = istAusgewaehlt ? VisualBuilder.Accent : VisualBuilder.Border,
-                BorderThickness = new Thickness(istAusgewaehlt ? 2 : 1),
                 Margin = new Thickness(0, 0, 16, 16),
                 Width = 260,
                 Child = inhalt,
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
+                ToolTip = "Doppelklick zum Öffnen"
             };
 
             karte.MouseLeftButtonDown += (s, e) =>
             {
-                if (e.ClickCount == 2)
-                {
-                    _main.AktuellesProjekt = projekt;
-                    _main.ZeigeSeite(new ProjektVisualisierungPage(_main, projekt));
-                    return;
-                }
-
-                AusgewaehltesProjekt = projekt;
+                if (e.ClickCount != 2) return;
                 _main.AktuellesProjekt = projekt;
-                ErzeugeProjektKarten();
-                _main.UpdateProjektBearbeitenUndLoeschenButtons();
+                _main.ZeigeSeite(new ProjektVisualisierungPage(_main, projekt));
             };
 
             return karte;

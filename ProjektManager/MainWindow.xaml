@@ -26,15 +26,25 @@
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button x:Name="ProjektLoeschenButton" Content="Projekt löschen"
                             Style="{StaticResource DangerButtonStyle}"
-                            Margin="8,0,0,0" IsEnabled="False" Click="ProjektLoeschen_Click"/>
+                            Margin="8,0,0,0" Click="ProjektLoeschen_Click"/>
                     <Button x:Name="ProjektBearbeitenButton" Content="Projekt bearbeiten"
                             Style="{StaticResource SecondaryButtonStyle}"
-                            Margin="8,0,0,0" IsEnabled="False" Click="ProjektBearbeiten_Click"/>
+                            Margin="8,0,0,0" Click="ProjektBearbeiten_Click"/>
                     <Button Content="Neues Projekt"
                             Style="{StaticResource PrimaryButtonStyle}"
                             Margin="8,0,0,0" Click="NeuesProjekt_Click"/>
                 </StackPanel>
             </DockPanel>
+        </Border>
+
+        <!-- Statusleiste (z.B. "Gespeichert"-Bestätigung) -->
+        <Border x:Name="StatusBorder" DockPanel.Dock="Bottom"
+                Background="{StaticResource SuccessSoftBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="20,8"
+                Visibility="Collapsed">
+            <TextBlock x:Name="StatusText" Foreground="{StaticResource SuccessBrush}" FontWeight="SemiBold" FontSize="12"/>
         </Border>
 
         <!-- Inhalt -->
